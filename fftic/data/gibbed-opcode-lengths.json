@@ -1,0 +1,1217 @@
+{
+  "0": {
+    "name": "Unknown00",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "1": {
+    "name": "Unknown01",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "2": {
+    "name": "Unknown02",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "3": {
+    "name": "Unknown03",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "4": {
+    "name": "Unknown04",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "5": {
+    "name": "Unknown05",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "6": {
+    "name": "Unknown06",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "7": {
+    "name": "Unknown07",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "8": {
+    "name": "Unknown08",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "9": {
+    "name": "Unknown09",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "10": {
+    "name": "Unknown0A",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "11": {
+    "name": "Unknown0B",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "12": {
+    "name": "Unknown0C",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "13": {
+    "name": "Unknown0D",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "14": {
+    "name": "Unknown0E",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "15": {
+    "name": "Unknown0F",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "16": {
+    "name": "DisplayMessage",
+    "classic": 14,
+    "enhanced": 17
+  },
+  "17": {
+    "name": "AnimationRequest",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "18": {
+    "name": "WaitAnimationEnd",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "19": {
+    "name": "JumpMap",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "20": {
+    "name": "Unknown14",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "21": {
+    "name": "Unknown15",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "22": {
+    "name": "WaitTask",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "23": {
+    "name": "Unknown17",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "24": {
+    "name": "ChangeEffect",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "25": {
+    "name": "MoveCamera",
+    "classic": 16,
+    "enhanced": 16
+  },
+  "26": {
+    "name": "MoveAmbient",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "27": {
+    "name": "MoveLight",
+    "classic": 14,
+    "enhanced": 14
+  },
+  "28": {
+    "name": "ChangeFrameRate",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "29": {
+    "name": "_CameraFusionStart",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "30": {
+    "name": "_CameraFusionEnd",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "31": {
+    "name": "_Focus",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "32": {
+    "name": "Unknown20",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "33": {
+    "name": "PlaySound",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "34": {
+    "name": "PlayMusic",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "35": {
+    "name": "Unknown23",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "36": {
+    "name": "Unknown24",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "37": {
+    "name": "Unknown25",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "38": {
+    "name": "Unknown26",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "39": {
+    "name": "RewriteMap",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "40": {
+    "name": "MoveToPanel",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "41": {
+    "name": "WaitCharacterMove",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "42": {
+    "name": "_BlockStart",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "43": {
+    "name": "_BlockEnd",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "44": {
+    "name": "Direction2_0",
+    "classic": 7,
+    "enhanced": 7
+  },
+  "45": {
+    "name": "Direction",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "46": {
+    "name": "FadeGradation",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "47": {
+    "name": "Unknown2F",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "48": {
+    "name": "Unknown30",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "49": {
+    "name": "ChangeGradation",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "50": {
+    "name": "SetCharacterColor",
+    "classic": 7,
+    "enhanced": 7
+  },
+  "51": {
+    "name": "ChangeMapClut",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "52": {
+    "name": "Unknown34",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "53": {
+    "name": "Unknown35",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "54": {
+    "name": "Unknown36",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "55": {
+    "name": "Unknown37",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "56": {
+    "name": "_FocusSpeed",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "57": {
+    "name": "WaitCharacterMoveWotL",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "58": {
+    "name": "WaitFileRead",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "59": {
+    "name": "MoveSprite",
+    "classic": 12,
+    "enhanced": 12
+  },
+  "60": {
+    "name": "ChangeWeather",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "61": {
+    "name": "DisappearUnit",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "62": {
+    "name": "SetChangePaletteData",
+    "classic": 9,
+    "enhanced": 9
+  },
+  "63": {
+    "name": "ChangeMapD",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "64": {
+    "name": "ChangeMapSTP",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "65": {
+    "name": "StartShake",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "66": {
+    "name": "StopShake",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "67": {
+    "name": "_CallFunction",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "68": {
+    "name": "_Draw",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "69": {
+    "name": "LoadAnimation",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "70": {
+    "name": "DeactivateAnimation",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "71": {
+    "name": "ActivateAnimation",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "72": {
+    "name": "WaitLoadAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "73": {
+    "name": "ActivateAnimationStart",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "74": {
+    "name": "ActivateAnimationEnd",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "75": {
+    "name": "WaitActivateAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "76": {
+    "name": "JumpMap2",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "77": {
+    "name": "_Reveal",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "78": {
+    "name": "SetAnimationShadow",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "79": {
+    "name": "SetDaytime",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "80": {
+    "name": "SetFace",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "81": {
+    "name": "_ChangeDialog",
+    "classic": 5,
+    "enhanced": 7
+  },
+  "82": {
+    "name": "Unknown52",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "83": {
+    "name": "Direction2_1",
+    "classic": 7,
+    "enhanced": 7
+  },
+  "84": {
+    "name": "StartModelAnimation",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "85": {
+    "name": "StartVRAMAnimation",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "86": {
+    "name": "WaitModelAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "87": {
+    "name": "WaitVRAMAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "88": {
+    "name": "LoadEventCharacter",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "89": {
+    "name": "ActivateEventCharacter",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "90": {
+    "name": "DeactivateEventCharacter",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "91": {
+    "name": "DisposeEventCharacter",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "92": {
+    "name": "ActivateCompressedAnimation",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "93": {
+    "name": "DeactivateCompressedAnimation",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "94": {
+    "name": "DisposeMusic",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "95": {
+    "name": "SetAnimationPosition",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "96": {
+    "name": "FadeMusic",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "97": {
+    "name": "Unknown61",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "98": {
+    "name": "Unknown62",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "99": {
+    "name": "SetMoveCameraFlags",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "100": {
+    "name": "WaitDirection",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "101": {
+    "name": "WaitDirectionAll",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "102": {
+    "name": "SetPresentClutDataAsDefault",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "103": {
+    "name": "Unknown67",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "104": {
+    "name": "SetAnimationHorizontalFlip",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "105": {
+    "name": "Direction4",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "106": {
+    "name": "FadeSoundEffect",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "107": {
+    "name": "PlaySoundEffect",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "108": {
+    "name": "SetAnimationColorChangeOff",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "109": {
+    "name": "SetAnimationColorChangeOn",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "110": {
+    "name": "MoveSprite2",
+    "classic": 12,
+    "enhanced": 12
+  },
+  "111": {
+    "name": "WaitMoveSprite",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "112": {
+    "name": "JumpToPanel",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "113": {
+    "name": "RaiseAnimationPriority",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "114": {
+    "name": "ForceStop",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "115": {
+    "name": "Unknown73",
+    "classic": 14,
+    "enhanced": 14
+  },
+  "116": {
+    "name": "Unknown74",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "117": {
+    "name": "Unknown75",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "118": {
+    "name": "StartWipe",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "119": {
+    "name": "StopWipe",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "120": {
+    "name": "_DisplayConditions",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "121": {
+    "name": "_WalkToAnim",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "122": {
+    "name": "EraseUnit",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "123": {
+    "name": "Unknown7B",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "124": {
+    "name": "StopAllEffects",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "125": {
+    "name": "DisplayChapter",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "126": {
+    "name": "WaitEventFlag",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "127": {
+    "name": "SetEventCharacterClut",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "128": {
+    "name": "RequestStandardAnimation",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "129": {
+    "name": "SetAnimationSound",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "130": {
+    "name": "Unknown82",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "131": {
+    "name": "_ChangeStats",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "132": {
+    "name": "PlayJingle",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "133": {
+    "name": "ChangeTreasureFindDay",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "134": {
+    "name": "EquipWeapon",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "135": {
+    "name": "UseGun",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "136": {
+    "name": "RestartMapPaletteAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "137": {
+    "name": "StopMapPaletteAnimation",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "138": {
+    "name": "WaitEffectLoad",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "139": {
+    "name": "PlayEffect",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "140": {
+    "name": "SetAnimationFlipDirection",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "141": {
+    "name": "Unknown8D",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "142": {
+    "name": "WaitDisplayChapter",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "143": {
+    "name": "Unknown8F",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "144": {
+    "name": "WaitActivePanel",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "145": {
+    "name": "DisplayMapTitle",
+    "classic": 3,
+    "enhanced": 3
+  },
+  "146": {
+    "name": "_InflictStatus",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "147": {
+    "name": "Unknown93",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "148": {
+    "name": "TeleportOut",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "149": {
+    "name": "Unknown95",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "150": {
+    "name": "_AppendMapState",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "151": {
+    "name": "SetAnimationBrightColor",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "152": {
+    "name": "TeleportIn",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "153": {
+    "name": "_BlueRemoveUnit",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "154": {
+    "name": "Unknown9A",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "155": {
+    "name": "Unknown9B",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "156": {
+    "name": "Unknown9C",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "157": {
+    "name": "Unknown9D",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "158": {
+    "name": "Unknown9E",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "159": {
+    "name": "Unknown9F",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "160": {
+    "name": "LessThanEquals",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "161": {
+    "name": "GreaterThanEquals",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "162": {
+    "name": "Equals",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "163": {
+    "name": "NotEquals",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "164": {
+    "name": "LessThan",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "165": {
+    "name": "GreaterThan",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "166": {
+    "name": "UnknownA6",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "167": {
+    "name": "UnknownA7",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "168": {
+    "name": "UnknownA8",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "169": {
+    "name": "UnknownA9",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "170": {
+    "name": "UnknownAA",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "171": {
+    "name": "UnknownAB",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "172": {
+    "name": "UnknownAC",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "173": {
+    "name": "ChangePostEffectDepthLUT",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "174": {
+    "name": "ChangePostEffectLUT",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "175": {
+    "name": "UnknownAF",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "176": {
+    "name": "Add",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "177": {
+    "name": "AddVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "178": {
+    "name": "Sub",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "179": {
+    "name": "SubVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "180": {
+    "name": "Mul",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "181": {
+    "name": "MulVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "182": {
+    "name": "Div",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "183": {
+    "name": "DivVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "184": {
+    "name": "Mod",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "185": {
+    "name": "ModVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "186": {
+    "name": "And",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "187": {
+    "name": "AndVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "188": {
+    "name": "Or",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "189": {
+    "name": "OrVar",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "190": {
+    "name": "Zero",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "191": {
+    "name": "UnknownBF",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "192": {
+    "name": "UnknownC0",
+    "classic": 16,
+    "enhanced": 16
+  },
+  "193": {
+    "name": "UnknownC1",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "194": {
+    "name": "UnknownC2",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "195": {
+    "name": "UnknownC3",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "196": {
+    "name": "UnknownC4",
+    "classic": 12,
+    "enhanced": 12
+  },
+  "197": {
+    "name": "ChangeDepthOfField",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "198": {
+    "name": "UnknownC6",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "199": {
+    "name": "UnknownC7",
+    "classic": 16,
+    "enhanced": 16
+  },
+  "200": {
+    "name": "UnknownC8",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "201": {
+    "name": "UnknownC9",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "202": {
+    "name": "UnknownCA",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "203": {
+    "name": "ChangePostEffectGlare",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "204": {
+    "name": "UnknownCC",
+    "classic": 12,
+    "enhanced": 12
+  },
+  "205": {
+    "name": "UnknownCD",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "206": {
+    "name": "UnknownCE",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "207": {
+    "name": "UnknownCF",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "208": {
+    "name": "SeekCodeForwardIfZero",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "209": {
+    "name": "SeekCodeForward",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "210": {
+    "name": "SeekCodeForwardTarget",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "211": {
+    "name": "SeekCodeBackward",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "212": {
+    "name": "Terminate",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "213": {
+    "name": "SeekCodeBackwardTarget",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "214": {
+    "name": "UnknownD6",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "215": {
+    "name": "UnknownD7",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "216": {
+    "name": "UnknownD8",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "217": {
+    "name": "UnknownD9",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "218": {
+    "name": "UnknownDA",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "219": {
+    "name": "_EventEnd",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "220": {
+    "name": "UnknownDC",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "221": {
+    "name": "UnknownDD",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "222": {
+    "name": "UnknownDE",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "223": {
+    "name": "UnknownDF",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "224": {
+    "name": "UnknownE0",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "225": {
+    "name": "UnknownE1",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "226": {
+    "name": "UnknownE2",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "227": {
+    "name": "_EventEnd2",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "228": {
+    "name": "UnknownE4",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "229": {
+    "name": "_WaitForInstruction",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "230": {
+    "name": "UnknownE6",
+    "classic": -1,
+    "enhanced": -1
+  },
+  "231": {
+    "name": "DisplayCaption",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "232": {
+    "name": "UnknownE8",
+    "classic": 1,
+    "enhanced": 1
+  },
+  "233": {
+    "name": "UnknownE9",
+    "classic": 8,
+    "enhanced": 8
+  },
+  "234": {
+    "name": "UnknownEA",
+    "classic": 5,
+    "enhanced": 5
+  },
+  "235": {
+    "name": "UnknownEB",
+    "classic": 6,
+    "enhanced": 10
+  },
+  "236": {
+    "name": "UnknownEC",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "237": {
+    "name": "UnknownED",
+    "classic": 6,
+    "enhanced": 6
+  },
+  "238": {
+    "name": "UnknownEE",
+    "classic": 4,
+    "enhanced": 4
+  },
+  "239": {
+    "name": "UnknownEF",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "240": {
+    "name": "UnknownF0",
+    "classic": 0,
+    "enhanced": 0
+  },
+  "241": {
+    "name": "_Wait",
+    "classic": 2,
+    "enhanced": 2
+  },
+  "242": {
+    "name": "_Pad",
+    "classic": 0,
+    "enhanced": 0
+  }
+}

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>fftic-rcc-startup</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <Deterministic>true</Deterministic>
+    <ReloadedSdkPath Condition="'$(ReloadedSdkPath)' == ''">C:\Reloaded-II\Reloaded.Mod.Interfaces.dll</ReloadedSdkPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Reloaded.Mod.Interfaces">
+      <HintPath>$(ReloadedSdkPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

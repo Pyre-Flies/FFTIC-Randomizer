@@ -1,0 +1,80 @@
+FFTIC Randomizer
+Original project code and modifications are distributed under GNU GPLv3.
+Version 0.6.2 modifications dated October 9, 2026 adapt the generator to
+Python 3, FFTIC Enhanced table formats and a Windows executable distribution.
+The complete GPLv3 text is included in LICENSE. Third-party components retain
+their upstream notices and applicable terms, identified below.
+
+Nenkai's fftivc.utility.modloader
+https://github.com/Nenkai/fftivc.utility.modloader
+Source inspected: c74047dc1b36bfe1bf6a466cf3645f1fe9815425
+The randomizer uses upstream packed table layouts and discovery signatures.
+
+MIT License
+
+Copyright (c) 2025 Nenkai
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Other references
+
+abyssonym's Rumble Chaos Crashdown
+https://github.com/abyssonym/rumble_chaos_crashdown
+Source inspected: ce9aafa1aaf7d05711cd33d8b49a062dc8a8a070 (version 27)
+The RCC v27 feature phases, encounter/formation rules, default patch behavior,
+conditional deltas, custom event bytecode and community-name list are adapted
+to Python 3 and FFTIC Enhanced in fftic/rcc*.py and fftic/data. Source line
+references are retained. PS1 ISO assets and original game tables are excluded.
+MIPS patches are reimplemented as guarded Enhanced x64 changes; their original
+assembly binaries are not shipped. Full redistribution is a custom mode.
+
+abyssonym's randomtools
+https://github.com/abyssonym/randomtools
+Source inspected: 8b883cc4d5c1c27e122bbc8c5411d420fd55d141
+The mutate_normal helper in fftic/rcc.py is adapted from
+randomtools/tablereader.py for Python 3 and an explicit random-number generator.
+The upstream code is distributed under GNU GPLv3. Its full terms are retained
+in fftic/data/RANDOMTOOLS-GPLv3.txt and the Windows distribution's
+licenses/randomtools-GPLv3.txt. This notice does not assign terms to the
+separate RCC repository or establish a missing permission grant.
+
+Rick / Gibbed's ScriptFormats
+https://github.com/gibbed/Gibbed.IvaliceChronicles
+Source inspected: 8f200e2902dab52dd36b5933df456ebb57173658
+Opcode operand lengths are adapted to JSON for the Enhanced event decoder.
+The complete zlib notice is retained in fftic/data/GIBBED-LICENSE.txt.
+
+FF16Tools by Nenkai
+https://github.com/Nenkai/FF16Tools
+Version 1.13.3 is used for game archive extraction and Nex table conversion.
+The Windows executable distribution bundles the official converter, layouts,
+native dependencies and .NET runtime. Their upstream license notices are
+included under licenses/. FF16Tools is not required to run a generated mod.
+Its MIT license grants redistribution with the copyright/license notice.
+The source-only ZIP excludes downloaded vendor dependencies; its build script
+retrieves/verifies the required inputs. No original game files are bundled.
+
+Bundled executable runtimes
+Python 3.13 (Python Software Foundation), Tcl/Tk, PyInstaller bootloader,
+Microsoft .NET 9, and the converter's NuGet/native dependencies retain their
+full upstream copyright and license texts under licenses/ in the executable
+and portable distribution. Build receipts identify the exact versions/hashes.
+
+This project's own managed startup bridge and guarded native runtime DLL are
+included with their complete source, build scripts and source/DLL hash receipt.

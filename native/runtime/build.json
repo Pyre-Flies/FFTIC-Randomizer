@@ -1,0 +1,13 @@
+{
+  "source_sha256": "3e4b292f5c74093736f57d7b66ac16b49b8c51cd7c18c070110c145de728ddad",
+  "dll_sha256": "fb297d86c57cb55749ede8f483fc84cf30eddef80b269dcd453a0a2f4f212b66",
+  "compiler": "MSVC x64 /MT /O2",
+  "source": "native/RuntimePatches.cpp",
+  "bridge_source_sha256": "d2afc796b870e0e9d06ac2cfdbceafa1f0b8890ecf39230f44afa0f9d9139aff",
+  "bridge_dll_sha256": "b414c74c5c713f2149f32b9f1d975335dedd00f497f80eebbf965160dc076d6c",
+  "bridge_source": "native/startup/RuntimeBridge.cs",
+  "bridge_target_framework": ".NETCoreApp,Version=v9.0",
+  "bridge_compiler": "PowerShell7 bundled Roslyn; explicit local .NET9 runtime metadata; deterministic x64 Release",
+  "bridge_runtime_metadata_version": "9.0.8",
+  "bridge_reloaded_interfaces_sha256": "7016fb463474d0f3d7187704d636bfc84dc6ab04b722b37b37801d7c7b5d41ef"
+}
