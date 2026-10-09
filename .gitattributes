@@ -1,0 +1,2 @@
+# Keep source bytes stable for the bundled DLL and executable build receipts.
+* -text

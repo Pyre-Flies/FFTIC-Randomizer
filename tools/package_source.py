@@ -21,7 +21,7 @@ for seed_folder in seed_folders:
     if manifest['generator_version'] != VERSION:
         raise ValueError('Seed version differs from source version')
 
-files = [ROOT/name for name in ('randomizer.py','Launch Randomizer.cmd','README.md','AGENTS.md','THIRD_PARTY_NOTICES.txt','LICENSE','.gitignore')]
+files = [ROOT/name for name in ('randomizer.py','Launch Randomizer.cmd','README.md','AGENTS.md','THIRD_PARTY_NOTICES.txt','LICENSE','.gitignore','.gitattributes')]
 for directory in ('fftic','docs','tests','tools','native'):
     files += [p for p in (ROOT/directory).rglob('*') if p.is_file()
               and '__pycache__' not in p.parts and p.suffix in ('.py','.ps1','.md','.txt','.cpp','.h','.json','.cs','.csproj')]
