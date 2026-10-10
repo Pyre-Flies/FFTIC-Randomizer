@@ -259,7 +259,8 @@ def write_spec(inputs: dict[str, Path]) -> Path:
     data = [(str(path), Path(name).parent.as_posix()) for name, path in sorted(inputs.items())]
     spec.write_text(
         f"a = Analysis([{str(entry)!r}], pathex=[{str(ROOT)!r}], binaries=[], datas={data!r}, "
-        "hiddenimports=['tkinter', 'tkinter.ttk'], hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False)\n"
+        "hiddenimports=['tkinter', 'tkinter.ttk', '__future__', 'argparse', 'contextlib', 'sqlite3', 'struct', 'zlib'], "
+        "hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False)\n"
         "pyz = PYZ(a.pure)\n"
         "exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='FFTICRandomizer', debug=False, "
         "bootloader_ignore_signals=False, strip=False, upx=False, console=True)\n"
