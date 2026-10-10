@@ -162,6 +162,8 @@ class QolMachineCodeTests(unittest.TestCase):
             self.assertEqual(element,64 if counters[2] else 0)
 
 
+@unittest.skipUnless((Path(__file__).resolve().parents[2]/'FFT_enhanced.exe').is_file(),
+                     'Requires verified local Enhanced inputs')
 class QolGuardTests(unittest.TestCase):
     def test_current_build_patch_guards_and_no_overlaps(self):
         game = Path(__file__).resolve().parents[2]
