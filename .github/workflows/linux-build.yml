@@ -28,6 +28,11 @@ jobs:
         with:
           dotnet-version: '9.0.318'
 
+      - name: Select the pinned SDK instead of the runner's newest SDK
+        run: |
+          printf '{"sdk":{"version":"9.0.318","rollForward":"disable","allowPrerelease":false}}\n' > global.json
+          dotnet --version
+
       - name: Run portable source tests
         run: python3 -m unittest discover -s tests -v
 
@@ -58,6 +63,8 @@ jobs:
             research/linux-build/*.log
             research/linux-build/*-smoke.json
             research/linux-build/bundle-inputs.json
+            research/linux-build/*-converter-integration/*.log
+            research/linux-build/*-converter-integration/result.json
             research/linux-converter-build/codec-tests.txt
             research/linux-converter-build/publish.txt
             research/linux-converter-build/converter-help.txt

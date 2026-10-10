@@ -19,8 +19,8 @@ python randomizer.py generate --seed example --ability-mode shuffle
 python randomizer.py generate --seed example --ability-mode full
 ```
 
-Windows source launches default to the source folder's parent as the game folder and
-`outputs` as the output folder. Linux searches Steam libraries. Choose your installed game in the GUI, or use
+Source launches default to the source folder's parent as the game folder and
+`outputs` as the output folder. Packaged apps search Steam libraries. Choose your installed game in the GUI, or use
 `python randomizer.py generate --help` for command-line paths and settings.
 
 ## Build the Windows executable

@@ -213,11 +213,12 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import types
 
 if sys.argv[1:2] == ["--bundle-smoke"]:
     from fftic import VERSION
     from fftic.runtime import workspace_root, resource_root, converter_environment
-    from fftic.preview import locate_cli
+    from fftic.preview import locate_cli, run_cli
     from fftic.gui import create_app
     resource = resource_root()
     cli = locate_cli(workspace_root())
@@ -227,6 +228,12 @@ if sys.argv[1:2] == ["--bundle-smoke"]:
     result = subprocess.run([str(cli), "--help"], cwd=cli.parent, env=converter_environment(), capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "FF16Tools" in result.stdout + result.stderr
+    integration = {}
+    if len(sys.argv) == 4:
+        module = types.ModuleType("fftic_frozen_converter_integration")
+        exec(__INTEGRATION_SOURCE__, module.__dict__)
+        module.run_cli = lambda executable, arguments, work, name: run_cli(executable, arguments, work / (name + ".log"))
+        integration = module.test_converter(cli, Path(sys.argv[2]), Path(sys.argv[3]))
     app = create_app(workspace_root())
     app.update_idletasks()
     title, geometry = app.title(), app.geometry()
@@ -236,7 +243,7 @@ if sys.argv[1:2] == ["--bundle-smoke"]:
     app.mainloop()
     print(json.dumps(dict(result="passed", version=VERSION, gui_title=title, gui_geometry=geometry,
                          converter=str(cli.relative_to(resource)), converter_help="passed",
-                         bundled_mod_resources="passed", global_dotnet_required=False)))
+                         converter_integration=integration, bundled_mod_resources="passed", global_dotnet_required=False)))
     sys.exit(0)
 
 from randomizer import main
@@ -246,7 +253,8 @@ sys.exit(main())
 
 def write_spec(inputs: dict[str, Path]) -> Path:
     entry = BUILD / "entrypoint.py"
-    entry.write_text(SMOKE_ENTRYPOINT, encoding="utf-8")
+    integration_source = (ROOT / "tools/linux-converter/integration_test.py").read_text(encoding="utf-8")
+    entry.write_text(SMOKE_ENTRYPOINT.replace("__INTEGRATION_SOURCE__", repr(integration_source)), encoding="utf-8")
     spec = BUILD / "FFTICRandomizer.spec"
     data = [(str(path), Path(name).parent.as_posix()) for name, path in sorted(inputs.items())]
     spec.write_text(
@@ -389,12 +397,18 @@ def smoke_check(command: list[str], label: str) -> dict:
         help_result = run([*command, "--help"], environment=environment, timeout=45)
         if "FFTIC Enhanced seeded table randomizer" not in help_result.stdout:
             raise ValueError(f"Frozen CLI help was unexpected: {label}")
-        smoke = run(["xvfb-run", "-a", "-s", "-screen 0 1280x800x24", *command, "--bundle-smoke"],
+        fixtures = ROOT / "research/linux-converter-build/fixtures"
+        if not (fixtures / "131089-1.gdeflate").is_file():
+            raise ValueError("Reference-compressed synthetic fixture missing for frozen converter smoke")
+        integration_work = BUILD / f"{label}-converter-integration"
+        smoke = run(["xvfb-run", "-a", "-s", "-screen 0 1280x800x24", *command, "--bundle-smoke", str(fixtures), str(integration_work)],
                     environment=environment, log=BUILD / f"{label}-smoke.log", timeout=60)
         line = next((line for line in reversed(smoke.stdout.splitlines()) if line.startswith("{")), None)
         report = json.loads(line or "{}")
         if report.get("result") != "passed":
             raise ValueError(f"Frozen GUI/converter smoke did not pass: {label}")
+        if set(report.get("converter_integration", {})) != {"specific_compressed_pac", "shared_compressed_pac", "nxd_sqlite_roundtrip"}:
+            raise ValueError(f"Frozen converter did not complete synthetic PAC and Nex integration: {label}")
         report.update(cli_help="passed", isolated_cache=True, global_dotnet_root_unavailable=True)
         write_json(BUILD / f"{label}-smoke.json", report)
         return report

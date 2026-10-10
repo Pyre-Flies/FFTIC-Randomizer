@@ -20,6 +20,8 @@ The output contains `FF16Tools.CLI`, `libfftic_gdeflate.so`, runtime and managed
 dependencies, layouts, notices, and a build receipt with file hashes. The main
 Linux packager bundles that folder. Developer checkouts and game files are
 never modified. Build inputs and logs remain under `research`.
+The helper writes a pinned `global.json` in its private build work folder so
+an installed newer SDK does not replace SDK 9.0.318.
 
 The converter is for extraction and table conversion. GDeflate archive packing
 throws an explicit `NotSupportedException`. The randomizer writes loose mod

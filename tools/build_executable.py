@@ -306,7 +306,7 @@ def portable_package(target: Path, inputs: dict[str, Path]) -> Path:
     shutil.copyfile(ROOT / 'THIRD_PARTY_NOTICES.txt', target / 'THIRD_PARTY_NOTICES.txt')
     shutil.copytree(LICENSES, target / 'licenses', dirs_exist_ok=True)
     (target / 'docs').mkdir(exist_ok=True)
-    for filename in ('INSTALL.md', 'SETTINGS.md'):
+    for filename in ('INSTALL.md', 'SETTINGS.md', 'LINUX.md'):
         shutil.copyfile(ROOT / 'docs' / filename, target / 'docs' / filename)
     readme = (
         f'FFTIC Randomizer {VERSION} — portable Windows x64 application\n\n'

@@ -180,12 +180,21 @@ def main() -> int:
     for command in ('git', 'cmake', 'dotnet'):
         if shutil.which(command) is None:
             raise ValueError(f'Build dependency missing: {command}')
-    sdk_version = run(['dotnet', '--version']).strip()
-    if sdk_version != '9.0.318':
-        raise ValueError(f'Use pinned .NET SDK 9.0.318; detected {sdk_version}')
     work = args.work.resolve()
     output = args.output.resolve()
     work.mkdir(parents=True, exist_ok=True)
+    sdk_settings = {'sdk': {'version': '9.0.318', 'rollForward': 'disable',
+                            'allowPrerelease': False}}
+    sdk_config = work / 'global.json'
+    if sdk_config.is_file() and json.loads(sdk_config.read_text(encoding='utf-8')) != sdk_settings:
+        raise ValueError('Converter build work folder has an unrelated global.json')
+    sdk_config.write_text(json.dumps(sdk_settings, indent=2) + '\n', encoding='utf-8')
+    # .NET selects the SDK from the working directory, even for an absolute
+    # project path. A newer SDK on a developer machine or hosted runner must
+    # not silently replace the pinned build compiler.
+    sdk_version = run(['dotnet', '--version'], cwd=work).strip()
+    if sdk_version != '9.0.318':
+        raise ValueError(f'Use pinned .NET SDK 9.0.318; detected {sdk_version}')
     output.mkdir(parents=True, exist_ok=True)
     converter = checkout('https://github.com/Nenkai/FF16Tools.git', FF16_COMMIT, work / 'FF16Tools')
     submodule(converter, 'FF16Tools.Files/Nex/Layouts/ffto', FFTIC_LAYOUTS_COMMIT)
@@ -206,14 +215,14 @@ def main() -> int:
     test_env = dict(os.environ)
     test_env['LD_LIBRARY_PATH'] = str(native) + ':' + test_env.get('LD_LIBRARY_PATH', '')
     managed_result = run(['dotnet', 'run', '--project', str(HERE / 'managed-test/CodecTest.csproj'),
-                          '--configuration', 'Release', '--', str(fixtures)], env=test_env)
+                          '--configuration', 'Release', '--', str(fixtures)], cwd=work, env=test_env)
     (work / 'codec-tests.txt').write_text(native_result + fixture_result + managed_result, encoding='utf-8')
     publish_result = run(['dotnet', 'publish', str(converter / 'FF16Tools.CLI/FF16Tools.CLI.csproj'),
                          '--configuration', 'Release', '--runtime', 'linux-x64',
                          '--self-contained', 'true', '--output', str(output),
                          '-p:RuntimeFrameworkVersion=' + DOTNET_VERSION,
                          '-p:PublishSingleFile=false', '-p:UseAppHost=true',
-                         '-p:DebugSymbols=false', '-p:DebugType=None'])
+                         '-p:DebugSymbols=false', '-p:DebugType=None'], cwd=work)
     (work / 'publish.txt').write_text(publish_result, encoding='utf-8')
     shutil.copyfile(native / 'libfftic_gdeflate.so', output / 'libfftic_gdeflate.so')
     aliases = layout_aliases(output)

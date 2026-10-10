@@ -921,3 +921,17 @@ frozen GUI startup under Xvfb for both AppImage and portable tarball. The build
 receipt records input hashes, native dependency checks and startup results.
 The game and mod runtime remain Windows components executed through Proton;
 an actual Steam Deck game launch remains unverified.
+
+Windows 0.6.3 cold-cache frozen generation passed in 147.91 seconds with no
+global Python or usable global .NET roots. All 69 payload hashes were checked;
+63 game-data files (14 XML, 34 Nex, 15 assets) matched source generation exactly,
+and all 23 native patch records matched. The GUI displayed its controls and
+closed normally. The executable resource audit excluded original game data,
+databases, research files and PDBs. Evidence: research/frozen-validation0.6.3/.
+
+A fresh Reloaded-II launch separately verified all 23 runtime ranges, 14 XML
+tables, 34 merged Nex tables and 15 assets, with no errors. The pre-existing
+CFILE_DAT__Decode signature warning used the successful alternate decoder.
+All 37 original files remained unchanged. The owned game closed normally and
+the prior installed seed plus 8 overlay archives were restored byte-for-byte.
+No battle or save input was performed. Evidence: research/live-validation-0.6.3/.
