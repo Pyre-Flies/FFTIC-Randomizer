@@ -40,6 +40,10 @@ APPIMAGE_RUNTIME_ASSET = "https://api.github.com/repos/AppImage/type2-runtime/re
 APPIMAGE_RUNTIME_COMMIT = "8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa"
 NO_ICU_BASE_IMAGE = "ubuntu@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401"
 APP_LOCAL_ICU_VERSION = "72.1.0.3"
+NO_ICU_RUNTIME_PACKAGES = (
+    "libssl3", "libstdc++6", "zlib1g", "fontconfig-config", "fonts-dejavu-core",
+    "libxcb1",
+)
 BUILD = ROOT / "research/linux-build"
 FF16_VERSION = "1.13.3"
 CONVERTER_DESTINATION = f"vendor/FF16Tools-{FF16_VERSION}/linux-x64"
@@ -509,7 +513,7 @@ def test_no_system_icu() -> dict:
     dockerfile = context / "Dockerfile"
     install = (
         "apt-get update\n"
-        "apt-get install --no-install-recommends -y libssl3 libstdc++6 zlib1g fontconfig-config fonts-dejavu-core\n"
+        "apt-get install --no-install-recommends -y " + " ".join(NO_ICU_RUNTIME_PACKAGES) + "\n"
         "if dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\\n' 'libicu*' 2>/dev/null | grep -q '^ii'; then exit 1; fi\n"
         "if find /usr /lib -name 'libicu*.so*' -print -quit | grep -q .; then exit 1; fi\n"
     )
@@ -574,6 +578,7 @@ def test_no_system_icu() -> dict:
             raise ValueError(f"Packaged {name} did not prove bundled ICU in the isolated runtime")
         reports[name] = report
     result = dict(result="passed", base_image=NO_ICU_BASE_IMAGE, runtime_image_id=image_id,
+                  desktop_runtime_packages=list(NO_ICU_RUNTIME_PACKAGES),
                   system_icu_installed=False, system_python_installed=False, system_dotnet_installed=False,
                   missing_app_local_icu_control="failed as expected", packaged_runtime_checks=reports)
     write_json(context / "result.json", result)
