@@ -3,8 +3,9 @@
 This build overlay gives the randomizer a native Linux archive extractor. It
 replaces the Windows DirectStorage `GDeflate.cs` adapter in a private, pinned
 FF16Tools checkout. NXD/SQLite conversion and the archive reader are unchanged.
-The resulting converter includes its .NET runtime and does not need Wine,
-Proton, Windows DirectStorage, or a separately installed .NET runtime.
+The resulting converter includes its .NET runtime and full app-local ICU. It
+does not need Wine, Proton, Windows DirectStorage, a separately installed .NET
+runtime, or a system ICU package.
 The build retains the original layout filenames and adds byte-identical
 lowercase copies because native NXD filenames are lowercase and Linux lookup
 is case sensitive. Layout parsing and table-name metadata are unchanged.
@@ -35,6 +36,7 @@ files and does not need archive packing.
 - FFTIC layouts: `d4a60952531d82bfd8a4fbb76b1f9b363f721dc1`
 - FF16 layouts: `d3ad0627a29af168916ad574dadbca6759e2ac48`
 - .NET runtime: 9.0.20; SDK: 9.0.318
+- Microsoft ICU runtime package: 72.1.0.3, source `807b1beec0dabf8a71f0bfde22da9705267f6a93`
 
 FF16Tools and the layout repositories are MIT. The DirectStorage repository
 includes MIT terms; its GDeflate reference code and NVIDIA additions use
@@ -45,6 +47,15 @@ Notice archives must match the exact packages restored by the SDK. Their raw
 SHA512 hashes are checked against NuGet's archive receipts; their separate
 unsigned-content hashes are checked against project assets, published dependency
 metadata, and NuGet content receipts. Both hashes are recorded in the notices.
+
+The private CLI project overlay adds Microsoft's ICU runtime package and sets
+`System.Globalization.AppLocalIcu` to `72.1.0.3`. Globalization invariant mode is
+explicitly disabled. The three official Linux x64 ICU libraries are checked
+against pinned hashes and bundled beside the converter. Their highest glibc
+requirement is 2.14, below the Ubuntu 22.04 build baseline. The build receipt
+records their hashes, provenance, and reviewed original/project-overlay hashes.
+Complete ICU, Unicode, and included third-party notices are retained, together
+with the official source and release references in `licenses/ICU-SOURCES.txt`.
 
 The optional .NET LTTng tracepoint plugin `libcoreclrtraceptprovider.so` is
 omitted before testing and packaging. The normal CLR and conversion dependencies
@@ -69,7 +80,12 @@ adapter test. No game data is included in these synthetic fixtures.
 The published converter is also tested end to end: two hand-authored PACK
 archives exercise specific and shared compressed chunks through the actual CLI,
 with byte-for-byte output checks. A hand-authored SQLite table is converted to
-NXD and back, retaining integer, UTF-8 string, and float cells exactly. This tests
+NXD and back, retaining eight integer, multilingual UTF-8 string, and float rows
+exactly, including Japanese, Chinese, Korean, Cyrillic, emoji, and combining
+marks. A hidden diagnostic command, `--fftic-globalization-probe`, verifies
+French decimals, Turkish casing, Japanese/Chinese culture data, normalization,
+and that all three loaded ICU libraries originate beside the converter by
+checking `/proc/self/maps`. This tests
 the converter's native codec and SQLite library loading, layout discovery, and
 Linux path handling together.
 

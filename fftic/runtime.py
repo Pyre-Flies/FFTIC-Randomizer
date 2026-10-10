@@ -133,6 +133,15 @@ def converter_environment():
         environment['PATH'] = str(dotnet)+os.pathsep+environment.get('PATH', '')
     if is_frozen():
         environment['DOTNET_BUNDLE_EXTRACT_BASE_DIR'] = str(workspace_root()/'converter-cache')
+        if is_linux():
+            # .NET 9 environment settings override runtimeconfig.json. The
+            # bundled converter must retain full culture data and its pinned
+            # app-local ICU even when launched from a customized shell.
+            for name in tuple(environment):
+                if (name.startswith('DOTNET_SYSTEM_GLOBALIZATION_')
+                        or name in ('CLR_ICU_VERSION_OVERRIDE', 'DOTNET_ICU_VERSION_OVERRIDE')):
+                    environment.pop(name)
+            environment['DOTNET_SYSTEM_GLOBALIZATION_INVARIANT'] = '0'
     return environment
 
 

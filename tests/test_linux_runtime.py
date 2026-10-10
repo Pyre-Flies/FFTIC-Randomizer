@@ -143,6 +143,42 @@ class LinuxRuntimeTests(unittest.TestCase):
         self.assertTrue(options['close_fds'])
         self.assertNotIn('shell', options)
 
+    def test_frozen_linux_converter_isolates_inherited_globalization_overrides(self):
+        inherited = {
+            'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT': '1',
+            'DOTNET_SYSTEM_GLOBALIZATION_APPLOCALICU': 'wrong:999.0',
+            'DOTNET_SYSTEM_GLOBALIZATION_USENLS': '1',
+            'DOTNET_SYSTEM_GLOBALIZATION_PREDEFINED_CULTURES_ONLY': '0',
+            'CLR_ICU_VERSION_OVERRIDE': '999.0',
+            'DOTNET_ICU_VERSION_OVERRIDE': '999.0',
+            'LD_LIBRARY_PATH': '/bundled/libraries',
+            'LANG': 'ja_JP.UTF-8',
+            'DOTNET_ROLL_FORWARD': 'Minor',
+        }
+        with patch.dict(os.environ, inherited), patch.object(runtime, 'is_frozen', return_value=True):
+            child = runtime.converter_environment()
+            self.assertEqual(child['DOTNET_SYSTEM_GLOBALIZATION_INVARIANT'], '0')
+            for name in inherited:
+                if name.startswith('DOTNET_SYSTEM_GLOBALIZATION_') or name.endswith('ICU_VERSION_OVERRIDE'):
+                    if name != 'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT':
+                        self.assertNotIn(name, child)
+                else:
+                    self.assertEqual(child[name], inherited[name])
+                self.assertEqual(os.environ[name], inherited[name], 'Parent environment was modified')
+            # Opening a system file manager keeps the user's own settings.
+            self.assertEqual(runtime.external_application_environment()['DOTNET_SYSTEM_GLOBALIZATION_INVARIANT'], '1')
+
+    def test_source_and_windows_converter_keep_user_globalization_settings(self):
+        inherited = {'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT': '1',
+                     'DOTNET_SYSTEM_GLOBALIZATION_APPLOCALICU': 'user:70.1',
+                     'CLR_ICU_VERSION_OVERRIDE': '70.1'}
+        with patch.dict(os.environ, inherited):
+            for frozen, linux in ((False, True), (True, False)):
+                with self.subTest(frozen=frozen, linux=linux), patch.object(runtime, 'is_frozen', return_value=frozen), patch.object(runtime, 'is_linux', return_value=linux):
+                    child = runtime.converter_environment()
+                    for name, value in inherited.items():
+                        self.assertEqual(child[name], value)
+
     def test_system_file_manager_does_not_inherit_frozen_library_overrides(self):
         with patch.object(runtime, 'is_frozen', return_value=True), patch.dict(os.environ, {'LD_LIBRARY_PATH': '/bundle/lib', 'LD_LIBRARY_PATH_ORIG': '/user/lib'}):
             with patch.object(gui.subprocess, 'Popen') as launch:

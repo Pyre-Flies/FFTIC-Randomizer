@@ -1,6 +1,6 @@
 FFTIC Randomizer
 Original project code and modifications are distributed under GNU GPLv3.
-Version 0.6.3 modifications dated October 9, 2026 adapt the generator to
+Version 0.6.4 modifications dated October 9, 2026 adapt the generator to
 Python 3, FFTIC Enhanced table formats and Windows/Linux executable distributions.
 The complete GPLv3 text is included in LICENSE. Third-party components retain
 their upstream notices and applicable terms, identified below.
@@ -97,3 +97,11 @@ and its statically linked runtime dependencies. Notices and the pinned
 AppImage runtime/libfuse/squashfuse source archives are included under licenses/.
 The Linux build receipt identifies source commits, dependency versions and
 hashes, native dependency checks, and frozen startup test results.
+
+App-local ICU in the Linux converter
+https://github.com/microsoft/icu
+Microsoft.ICU.ICU4C.Runtime provides the bundled ICU libraries. Their complete
+package notices and metadata are retained under licenses/converter/, and the
+converter receipt identifies the pinned package version, source and hashes.
+The converter uses these local libraries for full globalization support rather
+than relying on a system ICU installation or invariant globalization mode.

@@ -65,7 +65,7 @@ python3 tools/build_linux.py --prepare-dependencies
 ```
 
 This builds the pinned FF16Tools converter with a native CPU GDeflate decoder,
-bundles its .NET runtime and Python/Tk, and creates an AppImage and portable
+bundles its .NET runtime, app-local ICU, and Python/Tk, and creates an AppImage and portable
 archive under `outputs`. The generated mod still contains Windows runtime DLLs
 for FFTIC running through Proton. It does not need Wine to generate a seed.
 
@@ -75,6 +75,10 @@ local caches from the packages. The manual GitHub workflow in
 `.github/workflows/linux-build.yml` runs these same steps and provides build
 logs as an artifact. See [the converter build notes](../tools/linux-converter/README.md)
 for its pinned inputs and extraction-only adapter.
+
+Release portability checks also run both downloads in a clean Linux container
+without system ICU, Python or .NET. Full culture support, Unicode/float table
+conversion, native extraction and GUI startup must pass using the bundled files.
 
 Some parity tests and import tools expect a separate RCC reference checkout.
 Inspect their path options before running them; that checkout is not needed

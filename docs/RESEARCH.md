@@ -935,3 +935,27 @@ CFILE_DAT__Decode signature warning used the successful alternate decoder.
 All 37 original files remained unchanged. The owned game closed normally and
 the prior installed seed plus 8 overlay archives were restored byte-for-byte.
 No battle or save input was performed. Evidence: research/live-validation-0.6.3/.
+
+## App-local ICU portability correction, 0.6.4
+
+Version 0.6.3 bundled the .NET runtime but left ICU to the host. The Ubuntu
+builder's libicu70 installation masked this dynamically loaded dependency;
+ordinary ELF/ldd inspection did not establish ICU independence. A Steam Deck
+report confirmed generation terminated in System.Environment.FailFast with
+"Couldn't find a valid ICU package installed on the system".
+
+The Linux converter now carries pinned Microsoft ICU native libraries and uses
+System.Globalization.AppLocalIcu with full globalization enabled. The culture
+probe checks French decimal formatting, Turkish casing, Japanese and Chinese
+data, normalization, and actual ICU paths in /proc/self/maps. Frozen Linux
+converter children sanitize inherited globalization overrides so .NET 9
+environment precedence cannot substitute a host ICU or invariant mode.
+
+Release validation runs the actual AppImage and extracted portable archive in
+a clean Ubuntu runtime container without ICU, Python or .NET installed. It
+includes a missing-ICU negative control, culture/path checks, compressed PAC
+extraction, Unicode/float Nex conversion and GUI startup. The public build
+receipt records these results. The native game DLLs and allocation rules are
+unchanged. The Windows source seed comparison confirmed all 63 game-data files
+and runtime-patches.bin are byte-identical to the validated 0.6.3 seed.
+Evidence: research/seed-comparison-0.6.4.json and the versioned release artifacts.

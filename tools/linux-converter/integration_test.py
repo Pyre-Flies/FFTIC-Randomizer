@@ -56,6 +56,23 @@ def run_cli(cli: Path, args: list[str], work: Path, name: str) -> None:
 def test_converter(cli: Path, fixtures: Path, work: Path) -> dict:
     cli, fixtures, work = cli.resolve(), fixtures.resolve(), work.resolve()
     work.mkdir(parents=True, exist_ok=True)
+    globalization = None
+    config = cli.parent / 'FF16Tools.CLI.runtimeconfig.json'
+    if config.is_file():
+        properties = json.loads(config.read_text(encoding='utf-8'))['runtimeOptions'].get('configProperties', {})
+        if properties.get('System.Globalization.AppLocalIcu'):
+            if (properties['System.Globalization.AppLocalIcu'] != '72.1.0.3' or
+                    properties.get('System.Globalization.Invariant') is not False):
+                raise ValueError('Converter globalization configuration differs from the pinned full ICU runtime')
+            run_cli(cli, ['--fftic-globalization-probe'], work, 'globalization-probe')
+            globalization = json.loads((work / 'globalization-probe.log').read_text(encoding='utf-8').strip().lstrip('\ufeff'))
+            if (globalization.get('result') != 'passed' or globalization.get('icu_version') != '72.1.0.3'
+                    or globalization.get('invariant_mode') is not False
+                    or globalization.get('icu_from_app_directory') is not True
+                    or set(globalization.get('culture_checks', [])) != {'fr-FR', 'tr-TR', 'ja-JP', 'zh-CN'}
+                    or set(globalization.get('icu_libraries', [])) != {
+                        'libicudata.so.72.1.0.3', 'libicuuc.so.72.1.0.3', 'libicui18n.so.72.1.0.3'}):
+                raise ValueError('Converter did not verify full globalization using only app-local ICU libraries')
     source = (fixtures / '131089-1.bin').read_bytes()
     compressed = (fixtures / '131089-1.gdeflate').read_bytes()
     for shared in (False, True):
@@ -74,7 +91,13 @@ def test_converter(cli: Path, fixtures: Path, work: Path) -> dict:
 
     original = work / 'synthetic.sqlite'
     expected = [(1, 0, 'Linux native fixture', 0.5),
-                (17, 1, 'UTF-8 fixture: agréable', 1.5)]
+                (17, 1, 'UTF-8 fixture: agréable', 1.5),
+                (42, 2, '日本語: 月曜日', 2.25),
+                (43, 3, '中文: 简体與繁體', -0.5),
+                (44, 4, '한국어: 아이발리스', 0.125),
+                (45, 5, 'Русский: Ивалис', 16.0),
+                (46, 6, 'Emoji: 😀🌕', 3.5),
+                (47, 7, 'Combining accent: Cafe\u0301', 0.75)]
     with closing(sqlite3.connect(original)) as database:
         database.execute('DROP TABLE IF EXISTS Brightness')
         database.execute('CREATE TABLE Brightness (Key INTEGER, DLCFlags INTEGER, Comment TEXT, Value REAL)')
@@ -101,7 +124,9 @@ def test_converter(cli: Path, fixtures: Path, work: Path) -> dict:
         raise ValueError('Synthetic NXD/SQLite roundtrip did not retain exact rows')
     result = dict(specific_compressed_pac='exact bytes matched',
                   shared_compressed_pac='exact bytes matched',
-                  nxd_sqlite_roundtrip='two exact rows including UTF-8 and float cells')
+                  nxd_sqlite_roundtrip='eight exact rows including multilingual UTF-8, emoji, combining marks and float cells')
+    if globalization is not None:
+        result['globalization_probe'] = globalization
     (work / 'result.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     return result
 

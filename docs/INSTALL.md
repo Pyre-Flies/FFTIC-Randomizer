@@ -1,6 +1,6 @@
 # Install and play
 
-FFTIC Randomizer 0.6.3 creates a mod for the **Enhanced version of Final Fantasy
+FFTIC Randomizer 0.6.4 creates a mod for the **Enhanced version of Final Fantasy
 Tactics: The Ivalice Chronicles on Windows x64**. You choose a seed and settings,
 generate the mod, then play it through Reloaded-II.
 
@@ -13,7 +13,7 @@ installed game, Reloaded-II, and the FFTIC Mod Loader.
 ## 1. Download the randomizer
 
 1. Open the [FFTIC Randomizer Releases page](https://github.com/Pyre-Flies/FFTIC-Randomizer/releases/latest).
-2. Under **Assets**, download **fftic-randomizer-0.6.3-windows-x64.zip**.
+2. Under **Assets**, download **fftic-randomizer-0.6.4-windows-x64.zip**.
    The source download is for development; choose the Windows ZIP to play.
 3. Right-click the ZIP and choose **Extract All**. Extract it to a folder of
    your choice, such as `Documents\FFTIC Randomizer App`, outside the game folder.

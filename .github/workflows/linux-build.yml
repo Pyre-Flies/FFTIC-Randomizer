@@ -39,6 +39,9 @@ jobs:
       - name: Build native converter, Python bundle and Linux release files
         run: python3 tools/build_linux.py --prepare-dependencies
 
+      - name: Test AppImage and portable archive without system ICU, Python or .NET
+        run: python3 tools/build_linux.py --test-no-system-icu
+
       - name: Upload Linux release files
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -65,6 +68,11 @@ jobs:
             research/linux-build/bundle-inputs.json
             research/linux-build/*-converter-integration/*.log
             research/linux-build/*-converter-integration/result.json
+            research/linux-build/no-system-icu/*.log
+            research/linux-build/no-system-icu/result.json
+            research/linux-build/no-system-icu/evidence/*.log
+            research/linux-build/no-system-icu/evidence/*-integration/*.log
+            research/linux-build/no-system-icu/evidence/*-integration/result.json
             research/linux-converter-build/codec-tests.txt
             research/linux-converter-build/notice-tests.txt
             research/linux-converter-build/publish.txt

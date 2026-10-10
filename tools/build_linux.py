@@ -17,7 +17,9 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import tarfile
@@ -36,6 +38,8 @@ APPIMAGETOOL_SHA256 = "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3c
 APPIMAGE_RUNTIME_SHA256 = "156f4bdbde9c52d01814600013e0a273f0118dc2de98975f3c8c63427ec79074"
 APPIMAGE_RUNTIME_ASSET = "https://api.github.com/repos/AppImage/type2-runtime/releases/assets/596078161"
 APPIMAGE_RUNTIME_COMMIT = "8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa"
+NO_ICU_BASE_IMAGE = "ubuntu@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401"
+APP_LOCAL_ICU_VERSION = "72.1.0.3"
 BUILD = ROOT / "research/linux-build"
 FF16_VERSION = "1.13.3"
 CONVERTER_DESTINATION = f"vendor/FF16Tools-{FF16_VERSION}/linux-x64"
@@ -152,6 +156,14 @@ def collect_inputs(converter: Path, licenses: Path) -> dict[str, Path]:
             or not any(item.get("name") == "Microsoft.NETCore.App" and item.get("version") == "9.0.20"
                        for item in runtime_options.get("includedFrameworks", []))):
         raise ValueError("Converter runtime configuration requires a global framework or differs from pinned self-contained .NET")
+    globalization = runtime_options.get("configProperties", {})
+    if (globalization.get("System.Globalization.AppLocalIcu") != APP_LOCAL_ICU_VERSION
+            or globalization.get("System.Globalization.Invariant") is not False):
+        raise ValueError("Converter must use the pinned app-local ICU with full Unicode globalization")
+    for name in ("libicudata", "libicuuc", "libicui18n"):
+        library = converter / f"{name}.so.{APP_LOCAL_ICU_VERSION}"
+        if not library.is_file() or library.read_bytes()[:4] != b"\x7fELF":
+            raise ValueError(f"Bundled ICU library missing: {library.name}")
     receipt = json.loads((converter / "build-receipt.json").read_text(encoding="utf-8"))
     if (receipt.get("platform") != "linux-x64" or receipt.get("converter_version") != FF16_VERSION
             or receipt.get("dotnet_runtime") != "9.0.20" or receipt.get("tests_passed") is not True
@@ -408,8 +420,12 @@ def smoke_check(command: list[str], label: str) -> dict:
         report = json.loads(line or "{}")
         if report.get("result") != "passed":
             raise ValueError(f"Frozen GUI/converter smoke did not pass: {label}")
-        if set(report.get("converter_integration", {})) != {"specific_compressed_pac", "shared_compressed_pac", "nxd_sqlite_roundtrip"}:
+        if set(report.get("converter_integration", {})) != {"specific_compressed_pac", "shared_compressed_pac", "nxd_sqlite_roundtrip", "globalization_probe"}:
             raise ValueError(f"Frozen converter did not complete synthetic PAC and Nex integration: {label}")
+        probe = report["converter_integration"]["globalization_probe"]
+        if (probe.get("result") != "passed" or probe.get("icu_version") != APP_LOCAL_ICU_VERSION
+                or probe.get("invariant_mode") is not False or probe.get("icu_from_app_directory") is not True):
+            raise ValueError(f"Frozen converter did not load its bundled ICU with full Unicode support: {label}")
         report.update(cli_help="passed", isolated_cache=True, global_dotnet_root_unavailable=True)
         write_json(BUILD / f"{label}-smoke.json", report)
         return report
@@ -457,16 +473,119 @@ def make_packages(appdir: Path, prepare: bool, smoke: bool) -> list[Path]:
     return [appimage, archive, checksums, receipt]
 
 
+def test_no_system_icu() -> dict:
+    """Run the actual release files without host ICU, Python, or .NET installed.
+
+    The temporary X server runs on the build host. Its socket/auth cookie are
+    mounted read-only, so the runtime container needs no graphics packages
+    whose transitive dependencies might silently install ICU.
+    """
+    if shutil.which("docker") is None:
+        raise ValueError("Docker is required for the isolated no-system-ICU release check")
+    outputs = ROOT / "outputs"
+    appimage = outputs / f"FFTIC-Randomizer-{VERSION}-x86_64.AppImage"
+    archive = outputs / f"fftic-randomizer-{VERSION}-linux-x64.tar.gz"
+    for path in (appimage, archive):
+        if not path.is_file():
+            raise ValueError(f"Build the release files before the isolated runtime check: {path.name}")
+    fixtures = ROOT / "research/linux-converter-build/fixtures"
+    if not (fixtures / "131089-1.gdeflate").is_file():
+        raise ValueError("Reference-compressed fixture is missing for isolated runtime checks")
+    context = BUILD / "no-system-icu"
+    context.mkdir(parents=True, exist_ok=True)
+    dockerfile = context / "Dockerfile"
+    install = (
+        "apt-get update\n"
+        "apt-get install --no-install-recommends -y libssl3 libstdc++6 zlib1g fontconfig-config fonts-dejavu-core\n"
+        "if dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\\n' 'libicu*' 2>/dev/null | grep -q '^ii'; then exit 1; fi\n"
+        "if find /usr /lib -name 'libicu*.so*' -print -quit | grep -q .; then exit 1; fi\n"
+    )
+    dockerfile.write_text(f"FROM {NO_ICU_BASE_IMAGE}\nENV DEBIAN_FRONTEND=noninteractive\n"
+                          + "RUN " + json.dumps(["sh", "-ec", install]) + "\n", encoding="utf-8")
+    image = f"fftic-no-system-icu:{VERSION}"
+    run(["docker", "build", "--pull", "--no-cache", "--tag", image, str(context)],
+        log=context / "docker-build.log", timeout=600)
+    image_id = run(["docker", "image", "inspect", "--format", "{{.Id}}", image]).stdout.strip()
+    control = context / "missing-icu-control"
+    if control.exists():
+        shutil.rmtree(control)
+    shutil.copytree(BUILD / "converter", control)
+    configuration = control / "FF16Tools.CLI.runtimeconfig.json"
+    value = json.loads(configuration.read_text(encoding="utf-8"))
+    value["runtimeOptions"]["configProperties"]["System.Globalization.AppLocalIcu"] = "0.0.0.0"
+    value["runtimeOptions"]["configProperties"]["System.Globalization.Invariant"] = False
+    write_json(configuration, value)
+    (control / "FF16Tools.CLI").chmod(0o755)
+    script = context / "check.sh"
+    script.write_text(
+        "#!/bin/sh\nset -eu\nulimit -c 0\n"
+        "if command -v python3 >/dev/null 2>&1 || command -v dotnet >/dev/null 2>&1; then exit 1; fi\n"
+        "if dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\\n' 'libicu*' 2>/dev/null | grep -q '^ii'; then exit 1; fi\n"
+        "if find /usr /lib -name 'libicu*.so*' -print -quit | grep -q .; then exit 1; fi\n"
+        "if ldconfig -p | grep -q libicu; then exit 1; fi\n"
+        "printf 'No system ICU libraries, Python, or .NET executables are installed.\\n'\n"
+        "export DOTNET_ROOT=/tmp/fftic-unavailable-dotnet\nexport DOTNET_ROOT_X64=$DOTNET_ROOT\n"
+        "export DOTNET_MULTILEVEL_LOOKUP=0\nexport APPIMAGE_EXTRACT_AND_RUN=1\n"
+        "export FFTIC_DATA_DIR=/tmp/fftic-no-icu-cache\n"
+        "if /control/FF16Tools.CLI --fftic-globalization-probe > /evidence/missing-icu-control.log 2>&1; then\n"
+        "  printf 'Missing app-local ICU control unexpectedly succeeded.\\n' >&2\n  exit 1\nfi\n"
+        "grep -qi 'ICU' /evidence/missing-icu-control.log\n"
+        "mkdir -p /tmp/fftic-portable\n"
+        f"tar -xzf /release/{archive.name} -C /tmp/fftic-portable\n"
+        f"/tmp/fftic-portable/FFTIC-Randomizer-{VERSION}-Linux-x64/AppRun --bundle-smoke /fixtures /evidence/portable-integration > /evidence/portable-smoke.log 2>&1\n"
+        f"/release/{appimage.name} --bundle-smoke /fixtures /evidence/appimage-integration > /evidence/appimage-smoke.log 2>&1\n"
+        "cat /evidence/portable-smoke.log\ncat /evidence/appimage-smoke.log\n", encoding="utf-8")
+    evidence = context / "evidence"
+    evidence.mkdir(exist_ok=True)
+    launcher = context / "launch.sh"
+    launcher.write_text(
+        "#!/bin/sh\nset -eu\n"
+        f"exec docker run --rm --network none --hostname {shlex.quote(socket.gethostname())} --env DISPLAY --env XAUTHORITY=/tmp/fftic-xauthority "
+        f"--volume /tmp/.X11-unix:/tmp/.X11-unix:ro "
+        f"--volume \"$XAUTHORITY:/tmp/fftic-xauthority:ro\" "
+        f"--volume {shlex.quote(str(outputs) + ':/release:ro')} --volume {shlex.quote(str(fixtures) + ':/fixtures:ro')} "
+        f"--volume {shlex.quote(str(control) + ':/control:ro')} --volume {shlex.quote(str(script) + ':/check.sh:ro')} "
+        f"--volume {shlex.quote(str(evidence) + ':/evidence')} {shlex.quote(image)} sh /check.sh\n", encoding="utf-8")
+    run(["xvfb-run", "-a", "-s", "-screen 0 1280x800x24", "sh", str(launcher)],
+        log=context / "container-runtime.log", timeout=180)
+    reports = {}
+    for name in ("portable", "appimage"):
+        text = (evidence / f"{name}-smoke.log").read_text(encoding="utf-8")
+        line = next((line for line in reversed(text.splitlines()) if line.startswith("{")), None)
+        report = json.loads(line or "{}")
+        if report.get("result") != "passed" or not report.get("converter_integration"):
+            raise ValueError(f"Packaged {name} did not pass in the no-system-ICU container")
+        probe = report["converter_integration"].get("globalization_probe", {})
+        if (probe.get("result") != "passed" or probe.get("icu_version") != APP_LOCAL_ICU_VERSION
+                or probe.get("invariant_mode") is not False or probe.get("icu_from_app_directory") is not True):
+            raise ValueError(f"Packaged {name} did not prove bundled ICU in the isolated runtime")
+        reports[name] = report
+    result = dict(result="passed", base_image=NO_ICU_BASE_IMAGE, runtime_image_id=image_id,
+                  system_icu_installed=False, system_python_installed=False, system_dotnet_installed=False,
+                  missing_app_local_icu_control="failed as expected", packaged_runtime_checks=reports)
+    write_json(context / "result.json", result)
+    receipt_path = outputs / f"fftic-randomizer-{VERSION}-linux-x64-build-receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["no_system_icu_runtime_check"] = result
+    write_json(receipt_path, receipt)
+    print("Portable archive and AppImage passed without system ICU, Python or .NET.")
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prepare-dependencies", action="store_true", help="Build pinned converter and prepare pinned Python/AppImage packaging dependencies")
     parser.add_argument("--converter", type=Path, default=BUILD / "converter", help="Verified self-contained Linux converter publish directory")
     parser.add_argument("--check-only", action="store_true", help="Verify resource inputs without freezing or packaging")
     parser.add_argument("--skip-smoke", action="store_true", help="Skip Xvfb GUI smoke for local diagnostic builds; release CI always runs it")
+    parser.add_argument("--test-no-system-icu", action="store_true", help="Test already built release files in a fresh Docker container without system ICU/Python/.NET")
     args = parser.parse_args()
     if sys.platform != "linux" or platform.machine().lower() not in {"x86_64", "amd64"}:
         raise ValueError("Build on Linux x64; PyInstaller cannot cross-compile a Linux application from Windows")
     BUILD.mkdir(parents=True, exist_ok=True)
+    if args.test_no_system_icu:
+        test_no_system_icu()
+        return 0
     if args.prepare_dependencies:
         run([sys.executable, str(ROOT / "tools/linux-converter/build.py"), "--output", str(args.converter)],
             log=BUILD / "converter-build.log", timeout=1800)

@@ -1,7 +1,7 @@
 # Linux and Steam Deck
 
 The Linux download runs the randomizer natively. It includes Python, the archive
-converter, and the converter's runtime. You do not need to install those or
+converter, ICU for Unicode and language support, and the converter's runtime. You do not need to install those or
 change SteamOS's system packages to generate a seed.
 
 The generated mod runs in the Windows version of FFTIC Enhanced under Proton,
@@ -21,14 +21,14 @@ launch has been verified.
 For a terminal launch, use the actual downloaded filename:
 
 ```sh
-chmod +x FFTIC-Randomizer-0.6.3-x86_64.AppImage
-./FFTIC-Randomizer-0.6.3-x86_64.AppImage
+chmod +x FFTIC-Randomizer-0.6.4-x86_64.AppImage
+./FFTIC-Randomizer-0.6.4-x86_64.AppImage
 ```
 
 If the AppImage reports that FUSE is unavailable, run it without mounting:
 
 ```sh
-./FFTIC-Randomizer-0.6.3-x86_64.AppImage --appimage-extract-and-run
+./FFTIC-Randomizer-0.6.4-x86_64.AppImage --appimage-extract-and-run
 ```
 
 A portable Linux archive is also provided for systems where AppImage execution
@@ -98,6 +98,12 @@ the entire installed mod folder while the game is closed. Disabling the mod and
 restarting removes its runtime changes, but does not undo data stored in a save.
 
 ## Report a problem
+
+If version 0.6.3 stops during generation with **Couldn't find a valid ICU package
+installed on the system**, replace it with version **0.6.4 or newer**. Those
+downloads include ICU inside the app. You do not need to unlock SteamOS or
+install `libicu` with a system package manager. Keep the portable folder intact
+if you use the archive download.
 
 Include the release version, Linux distro or SteamOS version, seed and settings,
 exact error text, and the relevant converter or Reloaded-II log. For game-loading

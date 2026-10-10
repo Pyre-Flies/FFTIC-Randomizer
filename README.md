@@ -9,10 +9,10 @@ changes apply throughout the game, including the opening battle.
 
 Open the [Releases page](https://github.com/Pyre-Flies/FFTIC-Randomizer/releases/latest) and choose your download from **Assets**:
 
-- **Windows:** `fftic-randomizer-0.6.3-windows-x64.zip`. Extract it and open **FFTIC Randomizer.exe**.
-- **Linux / Steam Deck:** `FFTIC-Randomizer-0.6.3-x86_64.AppImage`. Allow it to run as a program and open it. A portable Linux archive is also available.
+- **Windows:** `fftic-randomizer-0.6.4-windows-x64.zip`. Extract it and open **FFTIC Randomizer.exe**.
+- **Linux / Steam Deck:** `FFTIC-Randomizer-0.6.4-x86_64.AppImage`. Allow it to run as a program and open it. A portable Linux archive is also available.
 
-Both apps include Python, FF16Tools, and the runtime they need. You need your own
+Both apps include Python, FF16Tools, and the runtime they need. The Linux app also includes ICU for Unicode and language support; no system ICU installation is needed. You need your own
 installed game, [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II/releases),
 and [FFTIC Mod Loader 1.7.5 or newer](https://github.com/Nenkai/fftivc.utility.modloader/releases)
 to play the generated mod.

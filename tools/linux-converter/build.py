@@ -15,10 +15,12 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
 import tarfile
+import zipfile
 
 from integration_test import test_converter
 
@@ -27,6 +29,7 @@ ROOT = HERE.parents[1]
 FF16_COMMIT = '14361aefa1e1265096b42cad95cd9f01550a0457'
 FF16_VERSION = '1.13.3'
 FF16_CODEC_SHA256 = '15a65380820e2b40e76daa9396a6d8334afda31be6114df371e3099229a61123'
+FF16_CLI_PROJECT_SHA256 = '666b144bfcd31b7322219d83aaa3cb85a8eddf631489a44761e233628ebd4a2b'
 DIRECTSTORAGE_COMMIT = 'c53f1499d5f67a61b69a1a348d22dcd2b4cb4ede'
 LIBDEFLATE_COMMIT = '8ba9502fb30d2bf728592d121f0d402e40c8cb05'
 FFTIC_LAYOUTS_COMMIT = 'd4a60952531d82bfd8a4fbb76b1f9b363f721dc1'
@@ -36,6 +39,17 @@ DOTNET_URL = ('https://builds.dotnet.microsoft.com/dotnet/Runtime/'
               f'{DOTNET_VERSION}/dotnet-runtime-{DOTNET_VERSION}-linux-x64.tar.gz')
 DOTNET_SHA512 = ('aaa63e9156fcc9d1c51e15fb38e3c5388a7721ef1b64065c8865b03133906e9de'
                  '967ae33903c198c6acb9aa8bbae373e9001405074009c2ef2a0bb6e54b509a5')
+ICU_VERSION = '72.1.0.3'
+ICU_COMMIT = '807b1beec0dabf8a71f0bfde22da9705267f6a93'
+ICU_PACKAGES = {
+    'Microsoft.ICU.ICU4C.Runtime': 'cfe928e8740a3df636eaa09bd93d89126883f338f01b15e867f48704e6126449',
+    'Microsoft.ICU.ICU4C.Runtime.linux-x64': '4afb3b4c2e79909ad7b531135f4b742b199c671ea9396ee4240f77f898ea5207',
+}
+ICU_FILES = {
+    'libicudata.so.72.1.0.3': 'c1256eb44fdce1bda02d4cbb4ced3fd880fe972d7d80493229dd36feae401476',
+    'libicui18n.so.72.1.0.3': '9f92ae6b8ef01fa64fcbee2fba51e43a443dc4f97242ff891af6ae3b318c730f',
+    'libicuuc.so.72.1.0.3': '598cf8ecf444d6baffe3c7734ffa694d4913ced8669ecde0a78b2ad21d3dacb3',
+}
 
 
 def digest(path: Path, algorithm: str = 'sha256') -> str:
@@ -80,21 +94,50 @@ def source_bytes(source: Path, commit: str, relative: str) -> bytes:
     return subprocess.check_output(['git', '-C', str(source), 'show', f'{commit}:{relative}'])
 
 
-def overlay_converter(source: Path) -> None:
-    relative = 'FF16Tools.Shared/GDeflate.cs'
-    original = source_bytes(source, FF16_COMMIT, relative)
-    if hashlib.sha256(original).hexdigest() != FF16_CODEC_SHA256:
-        raise ValueError('Pinned FF16Tools GDeflate source hash changed')
-    modified = run(['git', '-C', str(source), 'diff', '--name-only']).splitlines()
-    if set(modified) - {relative}:
-        raise ValueError('Converter checkout has changes outside the Linux codec overlay')
-    adapter = (HERE / 'GDeflate.cs').read_bytes()
-    # Accept Git's checkout newline conversion or a previously applied overlay.
-    existing = (source / relative).read_bytes()
-    if existing.replace(b'\r\n', b'\n') not in (
-            original.replace(b'\r\n', b'\n'), adapter.replace(b'\r\n', b'\n')):
-        raise ValueError('Converter codec has unrelated local changes')
-    (source / relative).write_bytes(adapter)
+def icu_project_overlay(original: bytes) -> bytes:
+    text = original.decode('utf-8').replace('\r\n', '\n')
+    if text.count('</Project>') != 1:
+        raise ValueError('Pinned converter project has an unexpected XML structure')
+    additions = (
+        '  <!-- FFTIC Linux overlay: app-local full ICU; upstream source remains pinned. -->\n'
+        '  <ItemGroup>\n'
+        f'    <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="{ICU_VERSION}" />\n'
+        f'    <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="{ICU_VERSION}" />\n'
+        '    <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="false" />\n'
+        '  </ItemGroup>\n'
+    )
+    return text.replace('</Project>', additions + '</Project>').encode('utf-8')
+
+
+def overlay_converter(source: Path) -> dict:
+    originals = {
+        'FF16Tools.Shared/GDeflate.cs': FF16_CODEC_SHA256,
+        'FF16Tools.CLI/FF16Tools.CLI.csproj': FF16_CLI_PROJECT_SHA256,
+    }
+    modified = run(['git', '-C', str(source), '-c', 'core.safecrlf=false',
+                    'diff', '--name-only']).splitlines()
+    if set(modified) - set(originals):
+        raise ValueError('Converter checkout has changes outside the reviewed Linux overlays')
+    receipt = {}
+    for relative, expected_hash in originals.items():
+        original = source_bytes(source, FF16_COMMIT, relative)
+        if hashlib.sha256(original).hexdigest() != expected_hash:
+            raise ValueError(f'Pinned converter source hash changed: {relative}')
+        overlay = (HERE / 'GDeflate.cs').read_bytes() if relative.endswith('GDeflate.cs') else icu_project_overlay(original)
+        existing = (source / relative).read_bytes()
+        if existing.replace(b'\r\n', b'\n') not in (
+                original.replace(b'\r\n', b'\n'), overlay.replace(b'\r\n', b'\n')):
+            raise ValueError(f'Converter has unrelated local changes: {relative}')
+        (source / relative).write_bytes(overlay)
+        receipt[relative] = dict(original_sha256=expected_hash,
+                                overlay_sha256=hashlib.sha256(overlay).hexdigest())
+    probe_source = HERE / 'GlobalizationProbe.cs'
+    probe_target = source / 'FF16Tools.CLI/FFTICGlobalizationProbe.cs'
+    if probe_target.exists() and probe_target.read_bytes() != probe_source.read_bytes():
+        raise ValueError('Converter globalization probe has unrelated local changes')
+    shutil.copyfile(probe_source, probe_target)
+    receipt['FF16Tools.CLI/FFTICGlobalizationProbe.cs'] = dict(authored_sha256=digest(probe_source))
+    return receipt
 
 
 def notice_module():
@@ -146,6 +189,55 @@ def omit_optional_trace_provider(output: Path) -> list[dict]:
                   upstream_source='https://github.com/dotnet/runtime/blob/v9.0.20/src/coreclr/pal/src/misc/tracepointprovider.cpp')
     provider.unlink()
     return [record]
+
+
+def validate_app_local_icu(output: Path) -> dict:
+    runtime = json.loads((output / 'FF16Tools.CLI.runtimeconfig.json').read_text(encoding='utf-8'))
+    properties = runtime['runtimeOptions'].get('configProperties', {})
+    if properties.get('System.Globalization.AppLocalIcu') != ICU_VERSION:
+        raise ValueError('Published converter is not configured for its pinned app-local ICU')
+    if properties.get('System.Globalization.Invariant') is not False:
+        raise ValueError('Published converter does not explicitly preserve full globalization')
+    version_requirements = set()
+    for filename, expected in ICU_FILES.items():
+        path = output / filename
+        if not path.is_file() or path.is_symlink() or digest(path) != expected:
+            raise ValueError(f'Published ICU binary differs from its pinned official package: {filename}')
+        binary = path.read_bytes()
+        if binary[:6] != b'\x7fELF\x02\x01' or int.from_bytes(binary[18:20], 'little') != 62:
+            raise ValueError(f'Published ICU binary is not Linux x64: {filename}')
+        version_requirements.update(match.decode('ascii') for match in re.findall(rb'GLIBC_[0-9.]+', binary))
+    maximum = max(version_requirements, key=lambda value: tuple(map(int, value.split('_')[1].split('.'))))
+    if tuple(map(int, maximum.split('_')[1].split('.'))) > (2, 35):
+        raise ValueError('Bundled ICU exceeds the Ubuntu 22.04 glibc baseline')
+    return dict(package='Microsoft.ICU.ICU4C.Runtime', version=ICU_VERSION,
+                source_commit=ICU_COMMIT, files=dict(ICU_FILES), full_globalization=True,
+                invariant_mode=False, highest_glibc_requirement=maximum,
+                runtimeconfig_property='System.Globalization.AppLocalIcu')
+
+
+def record_icu_sources(output: Path) -> None:
+    for package, expected in ICU_PACKAGES.items():
+        archive = ROOT / 'vendor/executable-licenses/nuget' / f'{package}.{ICU_VERSION}.nupkg'
+        if digest(archive) != expected:
+            raise ValueError(f'ICU package archive differs from its pinned official download: {package}')
+        with zipfile.ZipFile(archive) as bundle:
+            version_info = bundle.read('version.txt').decode('utf-8-sig')
+            if f'MS-ICU = {ICU_VERSION}' not in version_info or f'commit = {ICU_COMMIT}' not in version_info:
+                raise ValueError(f'ICU source provenance changed: {package}')
+    text = (
+        f'Microsoft ICU runtime package: {ICU_VERSION}\n'
+        f'Source: https://github.com/microsoft/icu/tree/{ICU_COMMIT}\n'
+        f'Release: https://github.com/microsoft/icu/releases/tag/v{ICU_VERSION}\n'
+        'Configuration: https://learn.microsoft.com/en-us/dotnet/core/extensions/globalization-icu#app-local-icu\n'
+        'The complete Unicode/ICU and included third-party notices are retained\n'
+        'in converter-dependencies/Microsoft.ICU.ICU4C.Runtime*/LICENSE.\n'
+        'The unmodified native libraries are bundled beside the converter.\n'
+        'Globalization invariant mode is disabled.\n\n'
+        'Pinned official package archive SHA256 values:\n'
+    )
+    text += ''.join(f'{name}/{ICU_VERSION}: {value}\n' for name, value in ICU_PACKAGES.items())
+    (output / 'licenses/ICU-SOURCES.txt').write_text(text, encoding='utf-8')
 
 
 def verify_notice_archive(notice: dict, assets: dict) -> dict:
@@ -267,7 +359,7 @@ def main() -> int:
     converter = checkout('https://github.com/Nenkai/FF16Tools.git', FF16_COMMIT, work / 'FF16Tools')
     submodule(converter, 'FF16Tools.Files/Nex/Layouts/ffto', FFTIC_LAYOUTS_COMMIT)
     submodule(converter, 'FF16Tools.Files/Nex/Layouts/faith', FF16_LAYOUTS_COMMIT)
-    overlay_converter(converter)
+    overlays = overlay_converter(converter)
     directstorage = checkout('https://github.com/microsoft/DirectStorage.git',
                             DIRECTSTORAGE_COMMIT, work / 'DirectStorage')
     if run(['git', '-C', str(directstorage), 'status', '--porcelain', '--untracked-files=no']).strip():
@@ -295,6 +387,7 @@ def main() -> int:
     omitted_runtime = omit_optional_trace_provider(output)
     shutil.copyfile(native / 'libfftic_gdeflate.so', output / 'libfftic_gdeflate.so')
     aliases = layout_aliases(output)
+    app_local_icu = validate_app_local_icu(output)
     executable = output / 'FF16Tools.CLI'
     apphost_header = executable.read_bytes()[:20]
     if (apphost_header[:6] != b'\x7fELF\x02\x01' or
@@ -306,6 +399,7 @@ def main() -> int:
     (work / 'converter-help.txt').write_text(cli_result, encoding='utf-8')
     integration = test_converter(executable, fixtures, work / 'integration')
     dependencies = collect_notices(output, converter, directstorage, libdeflate, work)
+    record_icu_sources(output)
     for debug in output.rglob('*.pdb'):
         debug.unlink()
     inputs = {path.relative_to(HERE).as_posix(): digest(path) for path in sorted(HERE.rglob('*'))
@@ -321,6 +415,7 @@ def main() -> int:
                    lowercase_layout_aliases=aliases,
                    notice_verification_tests=6,
                    omitted_optional_runtime_components=omitted_runtime,
+                   app_local_icu=app_local_icu, converter_overlays=overlays,
                    notice_packages=dependencies['package_count'],
                    runtime_notices_sha512=dependencies['runtime_notices_sha512'], sources=inputs,
                    files={path.relative_to(output).as_posix(): digest(path)
