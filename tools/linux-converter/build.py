@@ -1,0 +1,259 @@
+"""Build a pinned, self-contained Linux x64 FF16Tools extraction converter.
+
+Run with .NET SDK 9.0.318, git, CMake, and a C/C++ compiler installed. Sources
+are fetched to research; only the requested output folder is packaged. This
+never modifies a developer's FF16Tools checkout or any original game file.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+import sys
+import tarfile
+
+from integration_test import test_converter
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+FF16_COMMIT = '14361aefa1e1265096b42cad95cd9f01550a0457'
+FF16_VERSION = '1.13.3'
+FF16_CODEC_SHA256 = '15a65380820e2b40e76daa9396a6d8334afda31be6114df371e3099229a61123'
+DIRECTSTORAGE_COMMIT = 'c53f1499d5f67a61b69a1a348d22dcd2b4cb4ede'
+LIBDEFLATE_COMMIT = '8ba9502fb30d2bf728592d121f0d402e40c8cb05'
+FFTIC_LAYOUTS_COMMIT = 'd4a60952531d82bfd8a4fbb76b1f9b363f721dc1'
+FF16_LAYOUTS_COMMIT = 'd3ad0627a29af168916ad574dadbca6759e2ac48'
+DOTNET_VERSION = '9.0.20'
+DOTNET_URL = ('https://builds.dotnet.microsoft.com/dotnet/Runtime/'
+              f'{DOTNET_VERSION}/dotnet-runtime-{DOTNET_VERSION}-linux-x64.tar.gz')
+DOTNET_SHA512 = ('aaa63e9156fcc9d1c51e15fb38e3c5388a7721ef1b64065c8865b03133906e9de'
+                 '967ae33903c198c6acb9aa8bbae373e9001405074009c2ef2a0bb6e54b509a5')
+
+
+def digest(path: Path, algorithm: str = 'sha256') -> str:
+    return hashlib.new(algorithm, path.read_bytes()).hexdigest()
+
+
+def run(command: list[str], *, cwd: Path | None = None,
+        env: dict[str, str] | None = None) -> str:
+    result = subprocess.run(command, cwd=cwd, env=env, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if result.returncode:
+        raise ValueError(f'{command[0]} failed ({result.returncode}):\n{result.stdout}')
+    return result.stdout
+
+
+def checkout(url: str, commit: str, destination: Path) -> Path:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not destination.exists():
+        destination.mkdir()
+        run(['git', 'init', '--quiet', str(destination)])
+        run(['git', '-C', str(destination), 'remote', 'add', 'origin', url])
+        run(['git', '-C', str(destination), 'fetch', '--quiet', '--depth=1', 'origin', commit])
+        run(['git', '-C', str(destination), 'checkout', '--quiet', '--detach', commit])
+    if run(['git', '-C', str(destination), 'rev-parse', 'HEAD']).strip() != commit:
+        raise ValueError(f'Source checkout differs from its pinned revision: {destination.name}')
+    if run(['git', '-C', str(destination), 'remote', 'get-url', 'origin']).strip() != url:
+        raise ValueError(f'Source remote differs from its pinned origin: {destination.name}')
+    return destination
+
+
+def submodule(source: Path, relative: str, expected: str) -> Path:
+    run(['git', '-C', str(source), 'submodule', 'update', '--init', '--depth=1', relative])
+    directory = source / relative
+    if run(['git', '-C', str(directory), 'rev-parse', 'HEAD']).strip() != expected:
+        raise ValueError(f'Submodule revision changed: {relative}')
+    if run(['git', '-C', str(directory), 'status', '--porcelain', '--untracked-files=no']).strip():
+        raise ValueError(f'Pinned submodule contains modified source: {relative}')
+    return directory
+
+
+def source_bytes(source: Path, commit: str, relative: str) -> bytes:
+    return subprocess.check_output(['git', '-C', str(source), 'show', f'{commit}:{relative}'])
+
+
+def overlay_converter(source: Path) -> None:
+    relative = 'FF16Tools.Shared/GDeflate.cs'
+    original = source_bytes(source, FF16_COMMIT, relative)
+    if hashlib.sha256(original).hexdigest() != FF16_CODEC_SHA256:
+        raise ValueError('Pinned FF16Tools GDeflate source hash changed')
+    modified = run(['git', '-C', str(source), 'diff', '--name-only']).splitlines()
+    if set(modified) - {relative}:
+        raise ValueError('Converter checkout has changes outside the Linux codec overlay')
+    adapter = (HERE / 'GDeflate.cs').read_bytes()
+    # Accept Git's checkout newline conversion or a previously applied overlay.
+    existing = (source / relative).read_bytes()
+    if existing.replace(b'\r\n', b'\n') not in (
+            original.replace(b'\r\n', b'\n'), adapter.replace(b'\r\n', b'\n')):
+        raise ValueError('Converter codec has unrelated local changes')
+    (source / relative).write_bytes(adapter)
+
+
+def notice_module():
+    spec = importlib.util.spec_from_file_location('fftic_converter_notice_helpers',
+                                                ROOT / 'tools/build_executable.py')
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def layout_aliases(output: Path) -> int:
+    """Keep upstream spelling plus lowercase aliases used by native NXD names.
+
+    The original reader relies on Windows' case-insensitive filesystem. Copying
+    identical layout bytes under lowercase names preserves that lookup contract
+    on Linux without changing upstream parsing or table-name metadata.
+    """
+    layouts = output / 'Nex/Layouts'
+    count = 0
+    if not layouts.is_dir():
+        raise ValueError('Published converter is missing its Nex layouts')
+    for source in sorted(layouts.rglob('*.layout')):
+        destination = source.with_name(source.name.lower())
+        if destination == source:
+            continue
+        if destination.exists() and destination.read_bytes() != source.read_bytes():
+            raise ValueError(f'Layout filename case collision: {source.name}')
+        shutil.copyfile(source, destination)
+        count += 1
+    return count
+
+
+def collect_notices(output: Path, converter: Path, directstorage: Path,
+                    libdeflate: Path, work: Path) -> dict:
+    helpers = notice_module()
+    licenses = output / 'licenses'
+    licenses.mkdir(exist_ok=True)
+    helpers.LICENSES = licenses
+    deps = json.loads((output / 'FF16Tools.CLI.deps.json').read_text(encoding='utf-8'))
+    packages = {name: value for name, value in deps['libraries'].items()
+                if value.get('type') == 'package'}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        notices = list(executor.map(helpers.nuget_notices, sorted(packages.items())))
+    for notice in notices:
+        expected = notice.get('dependency_sha512')
+        if expected:
+            name, version = notice['package'].rsplit('/', 1)
+            package = ROOT / 'vendor/executable-licenses/nuget' / f'{name}.{version}.nupkg'
+            actual = 'sha512-' + base64.b64encode(hashlib.sha512(package.read_bytes()).digest()).decode('ascii')
+            if actual != expected:
+                raise ValueError(f'Downloaded notice package differs from restored dependency: {name}/{version}')
+    (licenses / 'converter-dependencies.json').write_text(json.dumps(notices, indent=2) + '\n', encoding='utf-8')
+    for source, filename in (
+            (converter / 'LICENSE.txt', 'FF16Tools-LICENSE.txt'),
+            (converter / 'FF16Tools.Files/Nex/Layouts/ffto/LICENSE', 'FFTIC-Nex-layouts-LICENSE.txt'),
+            (converter / 'FF16Tools.Files/Nex/Layouts/faith/LICENSE', 'FF16-Nex-layouts-LICENSE.txt'),
+            (directstorage / 'LICENSE', 'DirectStorage-MIT-LICENSE.txt'),
+            (directstorage / 'GDeflate/GDeflate/LICENSE', 'GDeflate-Apache-2.0-LICENSE.txt'),
+            (libdeflate / 'COPYING', 'NVIDIA-libdeflate-COPYING.txt')):
+        shutil.copyfile(source, licenses / filename)
+    runtime = helpers.download(DOTNET_URL, work / f'dotnet-runtime-{DOTNET_VERSION}-linux-x64.tar.gz',
+                               DOTNET_SHA512, 'sha512')
+    with tarfile.open(runtime, 'r:gz') as archive:
+        for filename in ('LICENSE.txt', 'ThirdPartyNotices.txt'):
+            members = [item for item in archive.getmembers()
+                       if item.name.lstrip('./') == filename and item.isfile()]
+            if len(members) != 1:
+                raise ValueError(f'Official .NET runtime notice missing: {filename}')
+            stream = archive.extractfile(members[0])
+            assert stream is not None
+            (licenses / f'dotnet-{filename}').write_bytes(stream.read())
+    return dict(package_count=len(notices), runtime_notices_sha512=DOTNET_SHA512)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--work', type=Path, default=ROOT / 'research/linux-converter-build')
+    args = parser.parse_args()
+    if sys.platform != 'linux' or platform.machine().lower() not in {'x86_64', 'amd64'}:
+        raise ValueError('Build the release converter on Linux x64; native CMake tests can also run on Windows.')
+    for command in ('git', 'cmake', 'dotnet'):
+        if shutil.which(command) is None:
+            raise ValueError(f'Build dependency missing: {command}')
+    sdk_version = run(['dotnet', '--version']).strip()
+    if sdk_version != '9.0.318':
+        raise ValueError(f'Use pinned .NET SDK 9.0.318; detected {sdk_version}')
+    work = args.work.resolve()
+    output = args.output.resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
+    converter = checkout('https://github.com/Nenkai/FF16Tools.git', FF16_COMMIT, work / 'FF16Tools')
+    submodule(converter, 'FF16Tools.Files/Nex/Layouts/ffto', FFTIC_LAYOUTS_COMMIT)
+    submodule(converter, 'FF16Tools.Files/Nex/Layouts/faith', FF16_LAYOUTS_COMMIT)
+    overlay_converter(converter)
+    directstorage = checkout('https://github.com/microsoft/DirectStorage.git',
+                            DIRECTSTORAGE_COMMIT, work / 'DirectStorage')
+    if run(['git', '-C', str(directstorage), 'status', '--porcelain', '--untracked-files=no']).strip():
+        raise ValueError('Pinned DirectStorage source contains local modifications')
+    libdeflate = submodule(directstorage, 'GDeflate/3rdparty/libdeflate', LIBDEFLATE_COMMIT)
+    native = work / 'native'
+    run(['cmake', '-S', str(HERE), '-B', str(native), '-DCMAKE_BUILD_TYPE=Release',
+         f'-DDIRECTSTORAGE_SOURCE={directstorage}'])
+    run(['cmake', '--build', str(native), '--config', 'Release', '--parallel', '2'])
+    native_result = run(['ctest', '--test-dir', str(native), '--build-config', 'Release', '--output-on-failure'])
+    fixtures = work / 'fixtures'
+    fixture_result = run([str(native / 'fftic_gdeflate_test'), '--fixtures', str(fixtures)])
+    test_env = dict(os.environ)
+    test_env['LD_LIBRARY_PATH'] = str(native) + ':' + test_env.get('LD_LIBRARY_PATH', '')
+    managed_result = run(['dotnet', 'run', '--project', str(HERE / 'managed-test/CodecTest.csproj'),
+                          '--configuration', 'Release', '--', str(fixtures)], env=test_env)
+    (work / 'codec-tests.txt').write_text(native_result + fixture_result + managed_result, encoding='utf-8')
+    publish_result = run(['dotnet', 'publish', str(converter / 'FF16Tools.CLI/FF16Tools.CLI.csproj'),
+                         '--configuration', 'Release', '--runtime', 'linux-x64',
+                         '--self-contained', 'true', '--output', str(output),
+                         '-p:RuntimeFrameworkVersion=' + DOTNET_VERSION,
+                         '-p:PublishSingleFile=false', '-p:UseAppHost=true',
+                         '-p:DebugSymbols=false', '-p:DebugType=None'])
+    (work / 'publish.txt').write_text(publish_result, encoding='utf-8')
+    shutil.copyfile(native / 'libfftic_gdeflate.so', output / 'libfftic_gdeflate.so')
+    aliases = layout_aliases(output)
+    executable = output / 'FF16Tools.CLI'
+    apphost_header = executable.read_bytes()[:20]
+    if (apphost_header[:6] != b'\x7fELF\x02\x01' or
+            int.from_bytes(apphost_header[18:20], 'little') != 62):
+        raise ValueError('Published converter does not have a Linux x64 ELF apphost')
+    cli_result = run([str(executable), '--help'], cwd=output)
+    if 'unpack' not in cli_result.lower() or 'nxd-to-sqlite' not in cli_result.lower():
+        raise ValueError('Published converter help did not expose expected conversion commands')
+    (work / 'converter-help.txt').write_text(cli_result, encoding='utf-8')
+    integration = test_converter(executable, fixtures, work / 'integration')
+    dependencies = collect_notices(output, converter, directstorage, libdeflate, work)
+    for debug in output.rglob('*.pdb'):
+        debug.unlink()
+    inputs = {path.relative_to(HERE).as_posix(): digest(path) for path in sorted(HERE.rglob('*'))
+              if path.is_file() and path.suffix in {'.py', '.cpp', '.h', '.cs', '.csproj', '.txt'}
+              and not set(path.relative_to(HERE).parts) & {'obj', 'bin', '__pycache__'}}
+    receipt = dict(platform='linux-x64', converter_version=FF16_VERSION,
+                   ff16tools_commit=FF16_COMMIT, directstorage_commit=DIRECTSTORAGE_COMMIT,
+                   libdeflate_commit=LIBDEFLATE_COMMIT, fftic_layouts_commit=FFTIC_LAYOUTS_COMMIT,
+                   ff16_layouts_commit=FF16_LAYOUTS_COMMIT, dotnet_sdk=sdk_version,
+                   dotnet_runtime=DOTNET_VERSION, codec='bounded Microsoft/NVIDIA CPU GDeflate',
+                   extraction_only=True, synthetic_fixtures=24, tests_passed=True,
+                   converter_integration=integration,
+                   lowercase_layout_aliases=aliases,
+                   notice_packages=dependencies['package_count'],
+                   runtime_notices_sha512=dependencies['runtime_notices_sha512'], sources=inputs,
+                   files={path.relative_to(output).as_posix(): digest(path)
+                          for path in sorted(output.rglob('*')) if path.is_file()
+                          and path.name != 'build-receipt.json'})
+    (output / 'build-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
+    print(f'Built native Linux x64 converter; {len(receipt["files"])} files, 24 codec fixtures passed.')
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        print(f'Error: {error}', file=sys.stderr)
+        raise SystemExit(1)

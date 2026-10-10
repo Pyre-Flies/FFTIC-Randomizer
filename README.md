@@ -1,26 +1,27 @@
 # FFTIC Randomizer
 
 A seeded randomizer for **Final Fantasy Tactics: The Ivalice Chronicles — Enhanced**,
-on Windows x64. Change job abilities, equipment, monsters, encounters, rewards,
+with native Windows and Linux x64 apps. Change job abilities, equipment, monsters, encounters, rewards,
 and more. Ordinary and unique jobs share the same settings, and shared job
 changes apply throughout the game, including the opening battle.
 
 ## Download
 
-Open the [Releases page](https://github.com/Pyre-Flies/FFTIC-Randomizer/releases/latest) and download
-**fftic-randomizer-0.6.2-windows-x64.zip** from **Assets**. Extract the ZIP and
-open **FFTIC Randomizer.exe**.
+Open the [Releases page](https://github.com/Pyre-Flies/FFTIC-Randomizer/releases/latest) and choose your download from **Assets**:
 
-The app includes Python, FF16Tools, and the runtime it needs. You need your own
+- **Windows:** `fftic-randomizer-0.6.3-windows-x64.zip`. Extract it and open **FFTIC Randomizer.exe**.
+- **Linux / Steam Deck:** `FFTIC-Randomizer-0.6.3-x86_64.AppImage`. Allow it to run as a program and open it. A portable Linux archive is also available.
+
+Both apps include Python, FF16Tools, and the runtime they need. You need your own
 installed game, [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II/releases),
 and [FFTIC Mod Loader 1.7.5 or newer](https://github.com/Nenkai/fftivc.utility.modloader/releases)
 to play the generated mod.
 
-**[Follow the installation and first-run guide](docs/INSTALL.md)** for complete setup.
+Follow the **[Windows installation guide](docs/INSTALL.md)** or **[Linux and Steam Deck guide](docs/LINUX.md)** for complete setup. The Linux generator runs natively; the game and Reloaded-II run under Proton. Game loading on Steam Deck remains experimental until verified on a real Deck.
 
 ## Quick start
 
-1. Extract the Windows ZIP and open **FFTIC Randomizer.exe**.
+1. Open the randomizer for your platform.
 2. Check **Game folder**. It must contain **FFT_enhanced.exe**.
 3. Enter a seed, choose your settings, and click **Generate randomizer mod**.
 4. Click **Open output**. Copy the entire **fftivc.randomizer.seed** folder into
@@ -64,7 +65,9 @@ the exact error, and a fresh Reloaded-II log. Troubleshooting is included in the
 [Rumble Chaos Crashdown by abyssonym](https://github.com/abyssonym/rumble_chaos_crashdown)
 provides the original randomization rules and built-in changes.
 [FF16Tools by Nenkai](https://github.com/Nenkai/FF16Tools) provides archive extraction
-and table conversion and is included in the Windows app.
+and table conversion and is included in both apps. The Linux converter uses the
+CPU GDeflate implementation from [Microsoft DirectStorage](https://github.com/microsoft/DirectStorage)
+and its [NVIDIA libdeflate dependency](https://github.com/NVIDIA/libdeflate).
 [Nenkai's FFTIC Mod Loader](https://github.com/Nenkai/fftivc.utility.modloader),
 [Nex layouts](https://github.com/Nenkai/fftivc-nex-layouts),
 [Gibbed's tools](https://github.com/gibbed/Gibbed.IvaliceChronicles), and

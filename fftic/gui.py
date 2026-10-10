@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import secrets
+import subprocess
 import threading
 import tkinter as tk
 from tkinter import font as tkfont
@@ -10,7 +11,8 @@ from tkinter import ttk, filedialog, messagebox
 from . import VERSION
 from .package import create_seed
 from .randomize import FLAGS, DEFAULT_FLAGS
-from .runtime import default_game_dir, default_output_dir, resource_root
+from .runtime import (default_game_dir, default_output_dir, resource_root, is_linux,
+                      external_application_environment)
 
 
 FLAG_HELP = {
@@ -31,6 +33,17 @@ FLAG_HELP = {
     'o': "Automatically advances event dialogue. Useful when replaying opening scenes or testing a new seed.",
     'b': "Makes six selected action abilities cost zero JP and MP and cast instantly wherever they are assigned. Useful for testing; this does not unlock every job or skill.",
 }
+
+
+def _open_folder(path):
+    """Launch the platform file manager without tying its lifetime to Tk."""
+    if is_linux():
+        subprocess.Popen(['xdg-open', str(Path(path).resolve())],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True,
+                         close_fds=True, env=external_application_environment())
+    else:
+        os.startfile(path)
 
 
 def _work_area(widget):
@@ -378,7 +391,10 @@ def create_app(project_root):
     def open_output():
         path = latest[0] or Path(variables["Output folder"].get())
         if path.exists():
-            os.startfile(path)
+            try:
+                _open_folder(path)
+            except OSError as error:
+                messagebox.showerror("Could not open output folder", f"{path}\n\n{error}")
 
     def complete(result, error=None):
         generate_button.configure(state="normal")

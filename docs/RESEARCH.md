@@ -893,3 +893,31 @@ or gameplay/save input was performed during this packaging validation.
 Evidence: research/frozen-validation0.6.2/result.json, process.json,
 originals.json and converter-runtime.trace; research/executable-build/
 artifact-audit.json, gui-startup.json, build.log and the portable build receipt.
+
+## Native Linux distribution, 0.6.3
+
+Linux runtime paths use native/Flatpak Steam library discovery, XDG cache and
+Documents locations, platform-specific converter selection, and xdg-open with
+the frozen application's library path restored. Windows defaults are retained.
+The local regression suite passed 140 tests, including Linux path fixtures.
+
+The Linux converter builds pinned FF16Tools 1.13.3 with a bounded CPU GDeflate
+adapter. It validates stream framing and output capacity before calling the
+pinned Microsoft/NVIDIA page decoder. Native and managed tests cover 24
+synthetic streams, invalid input and output guards. Synthetic PAC extraction
+and SQLite/NXD round trips exercise the published CLI. Lowercase layout aliases
+preserve exact upstream contents while allowing Linux filename lookup.
+
+The same CPU decoder was compiled diagnostically on Windows and checked
+against all 11,907 entries in 16 installed Enhanced archives (0002, 0004 and
+0005 plus locale archives). All stored CRCs and decoded lengths matched;
+original archive hashes were unchanged. No extracted game data was retained
+or included in public fixtures. This confirms archive compatibility, rather
+than Linux game loading. Evidence: research/linux-converter/archive-check.json.
+
+The manual Linux workflow targets Ubuntu 22.04/glibc 2.35. It builds the native
+converter, bundles Python/Tk and a self-contained .NET runtime, and checks
+frozen GUI startup under Xvfb for both AppImage and portable tarball. The build
+receipt records input hashes, native dependency checks and startup results.
+The game and mod runtime remain Windows components executed through Proton;
+an actual Steam Deck game launch remains unverified.

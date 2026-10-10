@@ -1,7 +1,7 @@
 FFTIC Randomizer
 Original project code and modifications are distributed under GNU GPLv3.
-Version 0.6.2 modifications dated October 9, 2026 adapt the generator to
-Python 3, FFTIC Enhanced table formats and a Windows executable distribution.
+Version 0.6.3 modifications dated October 9, 2026 adapt the generator to
+Python 3, FFTIC Enhanced table formats and Windows/Linux executable distributions.
 The complete GPLv3 text is included in LICENSE. Third-party components retain
 their upstream notices and applicable terms, identified below.
 
@@ -64,7 +64,9 @@ FF16Tools by Nenkai
 https://github.com/Nenkai/FF16Tools
 Version 1.13.3 is used for game archive extraction and Nex table conversion.
 The Windows executable distribution bundles the official converter, layouts,
-native dependencies and .NET runtime. Their upstream license notices are
+native dependencies and .NET runtime. The Linux distribution builds the pinned
+FF16Tools source with a native GDeflate adapter and lowercase layout aliases;
+its extraction and NXD conversion code is otherwise unchanged. Their notices are
 included under licenses/. FF16Tools is not required to run a generated mod.
 Its MIT license grants redistribution with the copyright/license notice.
 The source-only ZIP excludes downloaded vendor dependencies; its build script
@@ -78,3 +80,20 @@ and portable distribution. Build receipts identify the exact versions/hashes.
 
 This project's own managed startup bridge and guarded native runtime DLL are
 included with their complete source, build scripts and source/DLL hash receipt.
+
+Linux CPU GDeflate decoder
+https://github.com/microsoft/DirectStorage
+Source: c53f1499d5f67a61b69a1a348d22dcd2b4cb4ede
+https://github.com/NVIDIA/libdeflate
+Source: 8ba9502fb30d2bf728592d121f0d402e40c8cb05
+The Linux adapter uses the GDeflate page decoder from DirectStorage's pinned
+NVIDIA libdeflate submodule. The original MIT and Apache-2.0 notices are retained
+under licenses/converter/. Its bounded adapter, build overlay and synthetic
+integration tests are provided in tools/linux-converter/ in the source package.
+
+Linux application packaging
+The Linux bundle uses Python 3.10, Tcl/Tk, PyInstaller, AppImage type2-runtime,
+and its statically linked runtime dependencies. Notices and the pinned
+AppImage runtime/libfuse/squashfuse source archives are included under licenses/.
+The Linux build receipt identifies source commits, dependency versions and
+hashes, native dependency checks, and frozen startup test results.

@@ -24,6 +24,7 @@ from fftic.rcc_qol_extra import (
 GAME = Path(__file__).resolve().parents[2]
 
 
+@unittest.skipUnless((GAME/'FFT_enhanced.exe').is_file(), 'Requires verified local Enhanced inputs')
 class ExtraGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

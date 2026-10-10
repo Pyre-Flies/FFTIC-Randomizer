@@ -8,7 +8,7 @@ import shutil
 import sqlite3
 import subprocess
 import re
-from .runtime import resource_root, is_frozen, converter_environment
+from .runtime import resource_root, is_frozen, is_linux, converter_environment
 
 
 
@@ -24,9 +24,10 @@ def run_cli(cli, args, log):
 def locate_cli(project_root):
     configured = os.environ.get('FFTIC_FF16TOOLS')
     if not is_frozen() and configured and Path(configured).is_file(): return Path(configured).resolve()
-    choices = sorted((resource_root(project_root)/'vendor').glob('FF16Tools-*/**/FF16Tools.CLI.exe'))
+    executable = 'FF16Tools.CLI' if is_linux() else 'FF16Tools.CLI.exe'
+    choices = sorted((resource_root(project_root)/'vendor').glob('FF16Tools-*/**/'+executable))
     if not choices:
-        raise ValueError('Nex table output needs FF16Tools.CLI. Extract the official CLI release under vendor/FF16Tools-<version>/ or set FFTIC_FF16TOOLS.')
+        raise ValueError(f'Nex table output needs {executable}. Install the converter for this platform under vendor/FF16Tools-<version>/ or set FFTIC_FF16TOOLS when running from source.')
     return choices[-1]
 
 
