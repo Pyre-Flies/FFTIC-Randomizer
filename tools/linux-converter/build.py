@@ -128,6 +128,26 @@ def layout_aliases(output: Path) -> int:
     return count
 
 
+def omit_optional_trace_provider(output: Path) -> list[dict]:
+    """Omit .NET's optional LTTng plugin, retaining the normal CLR runtime.
+
+    The pinned runtime's PAL_InitializeTracing explicitly accepts dlopen failure
+    when the provider or its tracing dependencies are unavailable. Keeping this
+    unused plugin would impose an unnecessary liblttng-ust.so.0 dependency on
+    Steam Deck and desktop users.
+    """
+    provider = output / 'libcoreclrtraceptprovider.so'
+    if not provider.exists():
+        return []
+    if not provider.is_file() or provider.is_symlink():
+        raise ValueError('Optional runtime trace provider is not a regular file')
+    record = dict(file=provider.name, original_sha256=digest(provider),
+                  reason='Optional LTTng tracing plugin; the CLR continues when it cannot be loaded',
+                  upstream_source='https://github.com/dotnet/runtime/blob/v9.0.20/src/coreclr/pal/src/misc/tracepointprovider.cpp')
+    provider.unlink()
+    return [record]
+
+
 def verify_notice_archive(notice: dict, assets: dict) -> dict:
     """Link notice ZIP bytes to the packages actually restored by NuGet.
 
@@ -272,6 +292,7 @@ def main() -> int:
                          '-p:PublishSingleFile=false', '-p:UseAppHost=true',
                          '-p:DebugSymbols=false', '-p:DebugType=None'], cwd=work)
     (work / 'publish.txt').write_text(publish_result, encoding='utf-8')
+    omitted_runtime = omit_optional_trace_provider(output)
     shutil.copyfile(native / 'libfftic_gdeflate.so', output / 'libfftic_gdeflate.so')
     aliases = layout_aliases(output)
     executable = output / 'FF16Tools.CLI'
@@ -299,6 +320,7 @@ def main() -> int:
                    converter_integration=integration,
                    lowercase_layout_aliases=aliases,
                    notice_verification_tests=6,
+                   omitted_optional_runtime_components=omitted_runtime,
                    notice_packages=dependencies['package_count'],
                    runtime_notices_sha512=dependencies['runtime_notices_sha512'], sources=inputs,
                    files={path.relative_to(output).as_posix(): digest(path)

@@ -46,6 +46,13 @@ SHA512 hashes are checked against NuGet's archive receipts; their separate
 unsigned-content hashes are checked against project assets, published dependency
 metadata, and NuGet content receipts. Both hashes are recorded in the notices.
 
+The optional .NET LTTng tracepoint plugin `libcoreclrtraceptprovider.so` is
+omitted before testing and packaging. The normal CLR and conversion dependencies
+remain included. .NET 9.0.20 explicitly continues when this plugin cannot load,
+so users do not need its `liblttng-ust.so.0` tracing dependency. Its omission and
+original file hash are recorded in the build receipt. CLI extraction and table
+conversion tests run against this final runtime layout.
+
 ## Codec checks
 
 The native wrapper explicitly validates the stream header, offsets, output
