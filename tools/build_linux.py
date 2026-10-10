@@ -529,7 +529,7 @@ def test_no_system_icu() -> dict:
         "export FFTIC_DATA_DIR=/tmp/fftic-no-icu-cache\n"
         "if /control/FF16Tools.CLI --fftic-globalization-probe > /evidence/missing-icu-control.log 2>&1; then\n"
         "  printf 'Missing app-local ICU control unexpectedly succeeded.\\n' >&2\n  exit 1\nfi\n"
-        "grep -qi 'ICU' /evidence/missing-icu-control.log\n"
+        "grep -qi 'Failed to load app-local ICU' /evidence/missing-icu-control.log\n"
         "mkdir -p /tmp/fftic-portable\n"
         f"tar -xzf /release/{archive.name} -C /tmp/fftic-portable\n"
         f"/tmp/fftic-portable/FFTIC-Randomizer-{VERSION}-Linux-x64/AppRun --bundle-smoke /fixtures /evidence/portable-integration > /evidence/portable-smoke.log 2>&1\n"

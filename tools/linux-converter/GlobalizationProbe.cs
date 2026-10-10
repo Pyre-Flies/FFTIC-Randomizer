@@ -21,7 +21,6 @@ internal static class GlobalizationProbe
             return;
         Console.OutputEncoding = Encoding.UTF8;
         string configured = AppContext.GetData("System.Globalization.AppLocalIcu")?.ToString() ?? "";
-        Require(configured == IcuVersion, "The converter is not configured for its pinned app-local ICU.");
         Require(!AppContext.TryGetSwitch("System.Globalization.Invariant", out bool invariant) || !invariant,
             "Globalization invariant mode was enabled.");
 
@@ -39,6 +38,10 @@ internal static class GlobalizationProbe
             "Chinese culture data is unavailable.");
         Require("Cafe\u0301".Normalize(NormalizationForm.FormC) == "Café",
             "Unicode normalization is unavailable.");
+        // Initialize real globalization before checking the configured version.
+        // A negative control with a missing ICU version must exercise the CLR's
+        // native-library loading failure, rather than fail our version assertion.
+        Require(configured == IcuVersion, "The converter is not configured for its pinned app-local ICU.");
 
         string[] libraries = { $"libicudata.so.{IcuVersion}", $"libicuuc.so.{IcuVersion}",
             $"libicui18n.so.{IcuVersion}" };
