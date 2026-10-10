@@ -164,6 +164,9 @@ def collect_inputs(converter: Path, licenses: Path) -> dict[str, Path]:
         library = converter / f"{name}.so.{APP_LOCAL_ICU_VERSION}"
         if not library.is_file() or library.read_bytes()[:4] != b"\x7fELF":
             raise ValueError(f"Bundled ICU library missing: {library.name}")
+        alias = converter / f"{name}.so.{APP_LOCAL_ICU_VERSION.split('.')[0]}"
+        if not alias.is_file() or alias.is_symlink() or digest(alias) != digest(library):
+            raise ValueError(f"Bundled ICU SONAME alias differs from its pinned official library: {alias.name}")
     receipt = json.loads((converter / "build-receipt.json").read_text(encoding="utf-8"))
     if (receipt.get("platform") != "linux-x64" or receipt.get("converter_version") != FF16_VERSION
             or receipt.get("dotnet_runtime") != "9.0.20" or receipt.get("tests_passed") is not True
@@ -351,6 +354,16 @@ def assemble_appdir(bundle: Path, inputs: dict[str, Path], licenses: Path) -> tu
     destination = appdir / "usr/bin"
     shutil.copytree(bundle, destination, symlinks=True)
     resources = destination / "_internal"
+    # ICU's app-local version names are also checked against /proc/self/maps.
+    # Keep their physical files at the converter path if PyInstaller deduped
+    # one into a symlink to a SONAME alias or another bundle directory.
+    for name in ("libicudata", "libicuuc", "libicui18n"):
+        relative = f"{CONVERTER_DESTINATION}/{name}.so.{APP_LOCAL_ICU_VERSION}"
+        target = resources / relative
+        if target.is_symlink():
+            target.unlink()
+            shutil.copyfile(inputs[relative], target)
+            target.chmod(0o644)
     for name, source in inputs.items():
         target = resources / name
         if not target.is_file() or digest(target) != digest(source):

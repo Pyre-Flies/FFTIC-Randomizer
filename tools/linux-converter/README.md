@@ -54,6 +54,10 @@ explicitly disabled. The three official Linux x64 ICU libraries are checked
 against pinned hashes and bundled beside the converter. Their highest glibc
 requirement is 2.14, below the Ubuntu 22.04 build baseline. The build receipt
 records their hashes, provenance, and reviewed original/project-overlay hashes.
+The output also includes byte-identical regular copies named `libicudata.so.72`,
+`libicuuc.so.72`, and `libicui18n.so.72`. These satisfy the libraries' ELF SONAME
+and dependency names while .NET continues to open the full package filenames.
+The aliases preserve the official binary hashes and survive frozen packaging.
 Complete ICU, Unicode, and included third-party notices are retained, together
 with the official source and release references in `licenses/ICU-SOURCES.txt`.
 

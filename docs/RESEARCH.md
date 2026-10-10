@@ -951,6 +951,11 @@ data, normalization, and actual ICU paths in /proc/self/maps. Frozen Linux
 converter children sanitize inherited globalization overrides so .NET 9
 environment precedence cannot substitute a host ICU or invariant mode.
 
+The packaged ICU files use the full version suffix 72.1.0.3, while their ELF
+SONAME and DT_NEEDED entries use major version 72. Matching major-version aliases
+are required for independent linker inspection and retained in the bundle;
+the official library bytes remain unchanged and their hashes are verified.
+
 Release validation runs the actual AppImage and extracted portable archive in
 a clean Ubuntu runtime container without ICU, Python or .NET installed. It
 includes a missing-ICU negative control, culture/path checks, compressed PAC

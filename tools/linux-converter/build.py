@@ -50,6 +50,11 @@ ICU_FILES = {
     'libicui18n.so.72.1.0.3': '9f92ae6b8ef01fa64fcbee2fba51e43a443dc4f97242ff891af6ae3b318c730f',
     'libicuuc.so.72.1.0.3': '598cf8ecf444d6baffe3c7734ffa694d4913ced8669ecde0a78b2ad21d3dacb3',
 }
+ICU_SONAME_ALIASES = {
+    'libicudata.so.72': 'libicudata.so.72.1.0.3',
+    'libicui18n.so.72': 'libicui18n.so.72.1.0.3',
+    'libicuuc.so.72': 'libicuuc.so.72.1.0.3',
+}
 
 
 def digest(path: Path, algorithm: str = 'sha256') -> str:
@@ -191,6 +196,26 @@ def omit_optional_trace_provider(output: Path) -> list[dict]:
     return [record]
 
 
+def install_icu_soname_aliases(output: Path) -> None:
+    """Retain the official bytes under the ELF dependency names as well.
+
+    .NET opens the full app-local package filenames, but the same binaries'
+    SONAME and DT_NEEDED entries use the major-version names. Regular copies
+    survive frozen packaging without depending on symlink preservation.
+    """
+    for alias, filename in ICU_SONAME_ALIASES.items():
+        source = output / filename
+        expected = ICU_FILES[filename]
+        if not source.is_file() or source.is_symlink() or digest(source) != expected:
+            raise ValueError(f'Cannot alias an unverified ICU binary: {filename}')
+        destination = output / alias
+        if destination.exists() or destination.is_symlink():
+            if not destination.is_file() or destination.is_symlink() or digest(destination) != expected:
+                raise ValueError(f'Published ICU SONAME alias contains unrelated bytes: {alias}')
+        else:
+            shutil.copyfile(source, destination)
+
+
 def validate_app_local_icu(output: Path) -> dict:
     runtime = json.loads((output / 'FF16Tools.CLI.runtimeconfig.json').read_text(encoding='utf-8'))
     properties = runtime['runtimeOptions'].get('configProperties', {})
@@ -207,11 +232,16 @@ def validate_app_local_icu(output: Path) -> dict:
         if binary[:6] != b'\x7fELF\x02\x01' or int.from_bytes(binary[18:20], 'little') != 62:
             raise ValueError(f'Published ICU binary is not Linux x64: {filename}')
         version_requirements.update(match.decode('ascii') for match in re.findall(rb'GLIBC_[0-9.]+', binary))
+    for alias, filename in ICU_SONAME_ALIASES.items():
+        path = output / alias
+        if not path.is_file() or path.is_symlink() or digest(path) != ICU_FILES[filename]:
+            raise ValueError(f'Published ICU SONAME alias differs from its official binary: {alias}')
     maximum = max(version_requirements, key=lambda value: tuple(map(int, value.split('_')[1].split('.'))))
     if tuple(map(int, maximum.split('_')[1].split('.'))) > (2, 35):
         raise ValueError('Bundled ICU exceeds the Ubuntu 22.04 glibc baseline')
     return dict(package='Microsoft.ICU.ICU4C.Runtime', version=ICU_VERSION,
-                source_commit=ICU_COMMIT, files=dict(ICU_FILES), full_globalization=True,
+                source_commit=ICU_COMMIT, files=dict(ICU_FILES),
+                soname_aliases=dict(ICU_SONAME_ALIASES), full_globalization=True,
                 invariant_mode=False, highest_glibc_requirement=maximum,
                 runtimeconfig_property='System.Globalization.AppLocalIcu')
 
@@ -233,6 +263,7 @@ def record_icu_sources(output: Path) -> None:
         'The complete Unicode/ICU and included third-party notices are retained\n'
         'in converter-dependencies/Microsoft.ICU.ICU4C.Runtime*/LICENSE.\n'
         'The unmodified native libraries are bundled beside the converter.\n'
+        'Byte-identical regular copies also provide their major-version ELF SONAMEs.\n'
         'Globalization invariant mode is disabled.\n\n'
         'Pinned official package archive SHA256 values:\n'
     )
@@ -387,6 +418,7 @@ def main() -> int:
     omitted_runtime = omit_optional_trace_provider(output)
     shutil.copyfile(native / 'libfftic_gdeflate.so', output / 'libfftic_gdeflate.so')
     aliases = layout_aliases(output)
+    install_icu_soname_aliases(output)
     app_local_icu = validate_app_local_icu(output)
     executable = output / 'FF16Tools.CLI'
     apphost_header = executable.read_bytes()[:20]
