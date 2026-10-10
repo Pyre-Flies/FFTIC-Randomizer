@@ -41,6 +41,10 @@ includes MIT terms; its GDeflate reference code and NVIDIA additions use
 Apache-2.0. NVIDIA libdeflate's `COPYING` retains both the original Eric Biggers
 MIT terms and NVIDIA Apache-2.0 notice. The build copies their full notices plus
 the runtime and NuGet dependency notices into the output's `licenses` folder.
+Notice archives must match the exact packages restored by the SDK. Their raw
+SHA512 hashes are checked against NuGet's archive receipts; their separate
+unsigned-content hashes are checked against project assets, published dependency
+metadata, and NuGet content receipts. Both hashes are recorded in the notices.
 
 ## Codec checks
 

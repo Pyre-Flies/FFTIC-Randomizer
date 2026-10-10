@@ -128,6 +128,56 @@ def layout_aliases(output: Path) -> int:
     return count
 
 
+def verify_notice_archive(notice: dict, assets: dict) -> dict:
+    """Link notice ZIP bytes to the packages actually restored by NuGet.
+
+    NuGet's dependency hash is an unsigned-content hash for signed packages,
+    whereas .nupkg.sha512 covers the full archive, including its signature.
+    Check these distinct hashes against their corresponding restore receipts;
+    never compare the dependency content hash with the raw ZIP hash.
+    """
+    identity = notice['package']
+    name, version = identity.rsplit('/', 1)
+    expected = notice.get('dependency_sha512')
+    if not expected or not expected.startswith('sha512-'):
+        raise ValueError(f'Restored dependency content hash missing: {identity}')
+    content_hash = expected.removeprefix('sha512-')
+    libraries = {key.casefold(): value for key, value in assets['libraries'].items()}
+    library = libraries.get(identity.casefold())
+    if not library or library.get('type') != 'package' or library.get('sha512') != content_hash:
+        raise ValueError(f'Published dependency differs from its restore metadata: {identity}')
+    relative = Path(library['path'])
+    if relative.is_absolute() or '..' in relative.parts:
+        raise ValueError(f'Invalid restored package path: {identity}')
+    downloaded = ROOT / 'vendor/executable-licenses/nuget' / f'{name}.{version}.nupkg'
+    downloaded_hash = base64.b64encode(hashlib.sha512(downloaded.read_bytes()).digest()).decode('ascii')
+    found = False
+    for package_root in assets['packageFolders']:
+        directory = Path(package_root) / relative
+        basename = f'{name.lower()}.{version.lower()}.nupkg'
+        archive = directory / basename
+        archive_hash_file = directory / (basename + '.sha512')
+        metadata_file = directory / '.nupkg.metadata'
+        if not all(path.is_file() for path in (archive, archive_hash_file, metadata_file)):
+            continue
+        metadata = json.loads(metadata_file.read_text(encoding='utf-8-sig'))
+        if metadata.get('contentHash') != content_hash:
+            raise ValueError(f'Cached NuGet content hash differs from restored dependency: {identity}')
+        archive_hash = base64.b64encode(hashlib.sha512(archive.read_bytes()).digest()).decode('ascii')
+        if archive_hash_file.read_text(encoding='utf-8-sig').strip() != archive_hash:
+            raise ValueError(f'Cached NuGet archive failed its raw SHA512 receipt: {identity}')
+        if downloaded_hash != archive_hash:
+            raise ValueError(f'Official notice archive differs from the restored NuGet archive: {identity}')
+        found = True
+        break
+    if not found:
+        raise ValueError(f'Restored NuGet archive and receipts missing: {identity}')
+    return dict(package_archive_sha512='sha512-' + downloaded_hash,
+                restored_content_sha512=expected,
+                archive_verification='official archive bytes match the restored NuGet archive and its raw SHA512 receipt',
+                content_verification='published dependency, project assets and NuGet contentHash receipt match')
+
+
 def collect_notices(output: Path, converter: Path, directstorage: Path,
                     libdeflate: Path, work: Path) -> dict:
     helpers = notice_module()
@@ -139,14 +189,9 @@ def collect_notices(output: Path, converter: Path, directstorage: Path,
                 if value.get('type') == 'package'}
     with ThreadPoolExecutor(max_workers=4) as executor:
         notices = list(executor.map(helpers.nuget_notices, sorted(packages.items())))
+    assets = json.loads((converter / 'FF16Tools.CLI/obj/project.assets.json').read_text(encoding='utf-8-sig'))
     for notice in notices:
-        expected = notice.get('dependency_sha512')
-        if expected:
-            name, version = notice['package'].rsplit('/', 1)
-            package = ROOT / 'vendor/executable-licenses/nuget' / f'{name}.{version}.nupkg'
-            actual = 'sha512-' + base64.b64encode(hashlib.sha512(package.read_bytes()).digest()).decode('ascii')
-            if actual != expected:
-                raise ValueError(f'Downloaded notice package differs from restored dependency: {name}/{version}')
+        notice.update(verify_notice_archive(notice, assets))
     (licenses / 'converter-dependencies.json').write_text(json.dumps(notices, indent=2) + '\n', encoding='utf-8')
     for source, filename in (
             (converter / 'LICENSE.txt', 'FF16Tools-LICENSE.txt'),
@@ -195,6 +240,9 @@ def main() -> int:
     sdk_version = run(['dotnet', '--version'], cwd=work).strip()
     if sdk_version != '9.0.318':
         raise ValueError(f'Use pinned .NET SDK 9.0.318; detected {sdk_version}')
+    notice_tests = run([sys.executable, '-m', 'unittest', 'discover', '-s', str(HERE),
+                        '-p', 'test_package_notices.py', '-v'], cwd=work)
+    (work / 'notice-tests.txt').write_text(notice_tests, encoding='utf-8')
     output.mkdir(parents=True, exist_ok=True)
     converter = checkout('https://github.com/Nenkai/FF16Tools.git', FF16_COMMIT, work / 'FF16Tools')
     submodule(converter, 'FF16Tools.Files/Nex/Layouts/ffto', FFTIC_LAYOUTS_COMMIT)
@@ -250,6 +298,7 @@ def main() -> int:
                    extraction_only=True, synthetic_fixtures=24, tests_passed=True,
                    converter_integration=integration,
                    lowercase_layout_aliases=aliases,
+                   notice_verification_tests=6,
                    notice_packages=dependencies['package_count'],
                    runtime_notices_sha512=dependencies['runtime_notices_sha512'], sources=inputs,
                    files={path.relative_to(output).as_posix(): digest(path)

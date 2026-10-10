@@ -66,6 +66,7 @@ jobs:
             research/linux-build/*-converter-integration/*.log
             research/linux-build/*-converter-integration/result.json
             research/linux-converter-build/codec-tests.txt
+            research/linux-converter-build/notice-tests.txt
             research/linux-converter-build/publish.txt
             research/linux-converter-build/converter-help.txt
             research/linux-converter-build/integration/*.log
